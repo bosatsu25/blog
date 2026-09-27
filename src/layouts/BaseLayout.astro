@@ -13,6 +13,7 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const base = import.meta.env.BASE_URL;
 ---
 
 <!doctype html>
@@ -22,6 +23,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <link rel="icon" type="image/png" sizes="32x32" href={`${base}favicon-32x32.png`} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <script is:inline>
