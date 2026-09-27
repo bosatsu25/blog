@@ -2,16 +2,11 @@ import process from 'node:process';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 
-const [owner = 'owner', repository = `${owner}.github.io`] = (
-  process.env.GITHUB_REPOSITORY ?? `owner/owner.github.io`
-).split('/');
-
-const isUserSite = repository === `${owner}.github.io`;
-const base = process.env.GITHUB_ACTIONS === 'true' && !isUserSite ? `/${repository}` : '/';
+const [owner = 'owner'] = (process.env.GITHUB_REPOSITORY ?? 'owner/owner.github.io').split('/');
 
 export default defineConfig({
   site: process.env.SITE_URL ?? `https://${owner}.github.io`,
-  base,
+  base: process.env.SITE_BASE ?? '/',
   integrations: [react()],
   markdown: {
     shikiConfig: {

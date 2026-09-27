@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SITE_BASE: /
+
 jobs:
   quality:
     runs-on: ubuntu-latest
