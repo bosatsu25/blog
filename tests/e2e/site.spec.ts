@@ -25,7 +25,8 @@ test('theme toggle changes the document theme', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
-  const button = page.getByRole('button', { name: /mode に切り替える/ });
+  const header = page.locator('.site-header');
+  const button = header.getByRole('button', { name: /mode に切り替える/ });
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
 
