@@ -92,6 +92,12 @@ a:focus-visible {
     letter-spacing: -0.02em;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
   ul {
     display: flex;
     gap: 18px;
@@ -99,12 +105,6 @@ a:focus-visible {
     margin: 0;
     padding: 0;
   }
-}
-
-.theme-control {
-  display: flex;
-  justify-content: flex-end;
-  min-height: 32px;
 }
 
 .theme-toggle,
@@ -118,8 +118,32 @@ a:focus-visible {
 }
 
 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
   padding: 4px 10px;
+  color: var(--text);
   font-size: 13px;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--surface);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.theme-toggle__icon {
+  width: 1em;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
 }
 
 main {
@@ -362,9 +386,15 @@ footer {
   .site-header {
     align-items: flex-start;
 
-    nav ul {
-      flex-direction: column;
+    .header-actions {
       align-items: flex-end;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    nav ul {
+      align-items: flex-end;
+      flex-direction: column;
       gap: 4px;
     }
   }
