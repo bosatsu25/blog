@@ -1,0 +1,56 @@
+---
+import Header from '../components/Header.astro';
+import { ThemeToggle } from '../components/ThemeToggle';
+import '../styles/global.scss';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Ikesama — QA Engineer / Software Engineer',
+  description = 'Software quality, test automation, frontend engineering and personal projects.',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('theme');
+          const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = saved === 'light' || saved === 'dark' ? saved : dark ? 'dark' : 'light';
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          // Keep the default light theme when browser storage or media queries are unavailable.
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <Header />
+      <div class="theme-control">
+        <ThemeToggle client:load />
+      </div>
+      <main id="main-content">
+        <slot />
+      </main>
+      <footer>
+        <p>Built with Astro, TypeScript and selective React islands.</p>
+      </footer>
+    </div>
+  </body>
+</html>

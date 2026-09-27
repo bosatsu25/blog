@@ -1,0 +1,17 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostList from '../../components/PostList.astro';
+
+const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+);
+---
+
+<BaseLayout title="Writing — Ikesama" description="Notes on software engineering and quality.">
+  <header class="page-heading">
+    <p class="eyebrow">Notes</p>
+    <h1>Writing</h1>
+  </header>
+  <PostList posts={posts} />
+</BaseLayout>

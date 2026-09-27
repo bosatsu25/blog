@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ProjectFilter } from '../components/ProjectFilter';
+import { projects } from '../data/projects';
+---
+
+<BaseLayout title="Projects — Ikesama" description="Selected engineering projects.">
+  <header class="page-heading">
+    <p class="eyebrow">Selected work</p>
+    <h1 id="projects-heading">Projects</h1>
+    <p>個人開発とエンジニアリングの実験。絞り込みUIだけReact Islandとして動きます。</p>
+  </header>
+  <ProjectFilter projects={projects} client:visible />
+</BaseLayout>
