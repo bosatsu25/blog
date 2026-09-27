@@ -7,6 +7,10 @@ test('home page exposes primary navigation and writing', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
   await expect(navigation).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Writing', exact: true })).toBeVisible();
+  await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute(
+    'href',
+    /favicon\.svg$/,
+  );
 });
 
 test('project filter narrows the visible projects', async ({ page }) => {
