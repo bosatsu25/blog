@@ -24,6 +24,7 @@ export function ThemeToggle() {
   }, []);
 
   const nextTheme: Theme = theme === 'light' ? 'dark' : 'light';
+  const nextLabel = nextTheme === 'dark' ? 'Dark' : 'Light';
 
   const toggleTheme = () => {
     const currentTheme = getDocumentTheme();
@@ -38,12 +39,17 @@ export function ThemeToggle() {
     <button
       className="theme-toggle"
       type="button"
-      aria-label={`${nextTheme === 'dark' ? 'Dark' : 'Light'} mode に切り替える`}
+      aria-label={`${nextLabel} mode に切り替える`}
+      aria-pressed={theme === 'dark'}
       onClick={toggleTheme}
       disabled={!hydrated}
       data-hydrated={hydrated ? 'true' : 'false'}
+      title={`${nextLabel} mode に切り替える`}
     >
-      {theme === 'light' ? 'Dark' : 'Light'}
+      <span className="theme-toggle__icon" aria-hidden="true">
+        {theme === 'light' ? '☾' : '☀'}
+      </span>
+      <span className="theme-toggle__label">{nextLabel}</span>
     </button>
   );
 }
