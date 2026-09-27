@@ -1,6 +1,5 @@
 ---
 import Header from '../components/Header.astro';
-import { ThemeToggle } from '../components/ThemeToggle';
 import '../styles/global.scss';
 
 interface Props {
@@ -42,9 +41,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
   <body>
     <div class="page-shell">
       <Header />
-      <div class="theme-control">
-        <ThemeToggle client:load />
-      </div>
       <main id="main-content">
         <slot />
       </main>
