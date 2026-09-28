@@ -58,14 +58,27 @@ test('theme toggle changes the document theme', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
-  const header = page.locator('.top');
-  const button = header.getByRole('button', { name: /mode に切り替える/ });
+  const header = page.getByRole('banner');
+  const navigation = header.getByRole('navigation', { name: 'Primary navigation' });
+  const button = header.getByRole('button');
+
+  await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
+  await expect(button).toBeVisible();
+
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
+  const currentLabel = before === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
+  const nextLabel = expected === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
+
+  await expect(button).toHaveAccessibleName(currentLabel);
+  await expect(button).toHaveAttribute('title', currentLabel);
 
   await expect(button).toBeEnabled();
   await button.click();
 
   await expect(html).toHaveAttribute('data-theme', expected);
+  await expect(button).toHaveAccessibleName(nextLabel);
+  await expect(button).toHaveAttribute('title', nextLabel);
   await expect(button).toHaveAttribute('data-hydrated', 'true');
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expected);
 });
