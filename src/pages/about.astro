@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const base = import.meta.env.BASE_URL;
@@ -19,8 +20,8 @@ const base = import.meta.env.BASE_URL;
     </p>
 
     <p>
-      個人開発は <a href={`${base}projects/`}>Projects</a>、
-      技術メモは <a href={`${base}writing/`}>Writing</a> にまとめています。
+      個人開発は <a href={withBase('/projects/', base)}>Projects</a>、
+      技術メモは <a href={withBase('/writing/', base)}>Writing</a> にまとめています。
     </p>
   </article>
 </BaseLayout>
