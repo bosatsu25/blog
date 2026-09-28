@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { withBase } from '../config/site';
 import { formatBlogDate } from '../lib/date';
 
 interface Props {
@@ -11,15 +10,15 @@ const { posts } = Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
-<ol class="post-list">
+<ul class="post-list">
   {posts.map((post) => (
     <li>
-      <time datetime={post.data.publishedAt.toISOString()}>
+      <time class="post-meta" datetime={post.data.publishedAt.toISOString()}>
         {formatBlogDate(post.data.publishedAt, 'compact')}
       </time>
-      <a class="post-link" href={withBase(`/writing/${post.id}/`, base)}>
+      <a class="post-link" href={`${base}writing/${post.id}/`}>
         {post.data.title}
       </a>
     </li>
   ))}
-</ol>
+</ul>
