@@ -20,8 +20,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      SITE_URL: https://ikesama.dev
-      SITE_BASE: /
+      SITE_URL: https://bosatsuking.github.io/ikesama.dev
+      SITE_BASE: /ikesama.dev
     steps:
       - name: Checkout
         uses: actions/checkout@v7
