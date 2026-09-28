@@ -10,13 +10,9 @@ export type SiteConfig = Readonly<{
 }>;
 
 export const siteConfig = {
-  name: 'Ikesama',
+  name: "Ikesama's Blog",
   description: 'Software quality, test automation, frontend engineering and personal projects.',
-  navigation: [
-    { label: 'About', path: '/about/' },
-    { label: 'Projects', path: '/projects/' },
-    { label: 'Writing', path: '/writing/' },
-  ],
+  navigation: [{ label: 'About', path: '/about/' }],
 } as const satisfies SiteConfig;
 
 export function withBase(path: string, base: string): string {
