@@ -25,6 +25,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Format debug
+        run: |
+          npx prettier --write src/layouts/BaseLayout.astro
+          git diff -- src/layouts/BaseLayout.astro
       - run: npm run format:check
       - run: npm run lint
       - run: npm run check
