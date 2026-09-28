@@ -1,48 +1,131 @@
 import { expect, test } from '@playwright/test';
+import { readdir } from 'node:fs/promises';
+import { relative, resolve, sep } from 'node:path';
+import { withBase } from '../../src/config/site';
 
-const protectedPages = ['/', '/about/'];
+const distRoot = resolve(process.cwd(), 'dist');
+const siteBase = process.env.SITE_BASE ?? '/';
 
-test('production pages enforce a restrictive CSP and referrer policy', async ({ page }) => {
-  for (const route of protectedPages) {
-    await page.goto(route);
+type PublicHtmlPage = {
+  artifact: string;
+  route: string;
+};
 
-    const csp = await page
-      .locator('meta[http-equiv="content-security-policy"]')
-      .getAttribute('content');
+async function findHtmlFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const nestedFiles = await Promise.all(
+    entries.map(async (entry) => {
+      const path = resolve(directory, entry.name);
+      if (entry.isDirectory()) return findHtmlFiles(path);
+      return entry.isFile() && entry.name.toLowerCase().endsWith('.html') ? [path] : [];
+    }),
+  );
 
-    expect(csp).toBeTruthy();
-    expect(csp).toContain("default-src 'none'");
-    expect(csp).toContain("connect-src 'none'");
-    expect(csp).toContain("object-src 'none'");
-    expect(csp).toContain("base-uri 'none'");
-    expect(csp).toContain("form-action 'none'");
-    expect(csp).toContain("frame-src 'none'");
-    expect(csp).toContain("media-src 'none'");
-    expect(csp).toContain("worker-src 'none'");
-    expect(csp).toContain("img-src 'self' data:");
-    expect(csp).toContain("font-src 'self'");
-    expect(csp).not.toContain("'unsafe-eval'");
-    expect(csp).not.toContain("'unsafe-inline'");
+  return nestedFiles.flat();
+}
 
-    await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer');
+function routeForArtifact(artifact: string): string {
+  if (artifact === 'index.html') return '/';
+  if (artifact.endsWith('/index.html')) return `/${artifact.slice(0, -'index.html'.length)}`;
+  return `/${artifact}`;
+}
+
+async function getPublicHtmlPages(): Promise<PublicHtmlPage[]> {
+  const files = await findHtmlFiles(distRoot);
+  if (files.length === 0) {
+    throw new Error(
+      `No generated HTML pages found under ${distRoot}; build the production site first.`,
+    );
+  }
+
+  return files
+    .map((file) => {
+      const artifact = relative(distRoot, file).split(sep).join('/');
+      return {
+        artifact,
+        route: withBase(routeForArtifact(artifact), siteBase),
+      };
+    })
+    .sort((left, right) => left.artifact.localeCompare(right.artifact));
+}
+
+test('every production HTML page enforces restrictive CSP and referrer policy', async ({
+  page,
+}) => {
+  const pages = await getPublicHtmlPages();
+
+  for (const { artifact, route } of pages) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      await page.goto(route);
+
+      const csp = await page
+        .locator('meta[http-equiv="content-security-policy"]')
+        .getAttribute('content');
+
+      expect(csp, artifact).toBeTruthy();
+      expect(csp, artifact).toContain("default-src 'none'");
+      expect(csp, artifact).toContain("connect-src 'none'");
+      expect(csp, artifact).toContain("object-src 'none'");
+      expect(csp, artifact).toContain("base-uri 'none'");
+      expect(csp, artifact).toContain("form-action 'none'");
+      expect(csp, artifact).toContain("frame-src 'none'");
+      expect(csp, artifact).toContain("media-src 'none'");
+      expect(csp, artifact).toContain("worker-src 'none'");
+      expect(csp, artifact).toContain("img-src 'self' data:");
+      expect(csp, artifact).toContain("font-src 'self'");
+      expect(csp, artifact).not.toMatch(/'unsafe-(?:inline|eval)'/);
+      await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer');
+    });
   }
 });
 
-test('pages make no third-party subresource requests', async ({ page }) => {
-  const origins = new Set<string>();
+test('production HTML pages make no third-party requests', async ({ page }) => {
+  const baseURL = test.info().project.use.baseURL;
+  if (typeof baseURL !== 'string') {
+    throw new Error('The security Playwright project must configure a baseURL.');
+  }
 
+  const allowedOrigin = new URL(baseURL).origin;
+  const thirdPartyRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.protocol === 'http:' || url.protocol === 'https:') {
-      origins.add(url.origin);
+    if ((url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== allowedOrigin) {
+      thirdPartyRequests.push(url.href);
     }
   });
 
-  for (const route of protectedPages) {
-    await page.goto(route);
+  for (const { artifact, route } of await getPublicHtmlPages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      const requestCount = thirdPartyRequests.length;
+      await page.goto(route);
+      expect(thirdPartyRequests.slice(requestCount), artifact).toEqual([]);
+    });
   }
 
-  expect([...origins]).toEqual(['http://127.0.0.1:4322']);
+  expect(thirdPartyRequests).toEqual([]);
+});
+
+test('production HTML pages have no CSP violations or runtime errors', async ({ page }) => {
+  const errors: string[] = [];
+
+  await page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (event) => {
+      document.documentElement.setAttribute('data-csp-violation', event.violatedDirective);
+    });
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+
+  for (const { artifact, route } of await getPublicHtmlPages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      await page.goto(route);
+      await expect(page.locator('html')).not.toHaveAttribute('data-csp-violation');
+    });
+  }
+
+  expect(errors).toEqual([]);
 });
 
 test('CSP does not break the interactive theme island', async ({ page }) => {
@@ -53,7 +136,7 @@ test('CSP does not break the interactive theme island', async ({ page }) => {
   });
   page.on('pageerror', (error) => errors.push(error.message));
 
-  await page.goto('/');
+  await page.goto(withBase('/', siteBase));
 
   const html = page.locator('html');
   const button = page.getByRole('button', { name: /mode に切り替える/ });
@@ -67,14 +150,30 @@ test('CSP does not break the interactive theme island', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('public pages keep the active browser attack surface minimal', async ({ page }) => {
-  for (const route of protectedPages) {
-    await page.goto(route);
+test('production pages keep attack surface and external links safe', async ({ page }) => {
+  for (const { artifact, route } of await getPublicHtmlPages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      await page.goto(route);
 
-    await expect(page.locator('form')).toHaveCount(0);
-    await expect(page.locator('iframe')).toHaveCount(0);
-    await expect(page.locator('object')).toHaveCount(0);
-    await expect(page.locator('embed')).toHaveCount(0);
+      await expect(page.locator('form')).toHaveCount(0);
+      await expect(page.locator('iframe')).toHaveCount(0);
+      await expect(page.locator('object')).toHaveCount(0);
+      await expect(page.locator('embed')).toHaveCount(0);
+
+      const unsafeExternalLinks = await page
+        .locator('a[href^="http://"], a[href^="https://"]')
+        .evaluateAll((anchors) =>
+          anchors
+            .filter((anchor): anchor is HTMLAnchorElement => anchor instanceof HTMLAnchorElement)
+            .filter((anchor) => anchor.target === '_blank')
+            .filter((anchor) => {
+              const rel = anchor.rel.split(/\s+/);
+              return !rel.includes('noopener') || !rel.includes('noreferrer');
+            })
+            .map((anchor) => anchor.href),
+        );
+      expect(unsafeExternalLinks, artifact).toEqual([]);
+    });
   }
 });
 
@@ -91,26 +190,29 @@ test('common sensitive project paths are not publicly exposed', async ({ request
   ];
 
   for (const path of sensitivePaths) {
-    const response = await request.get(path, { failOnStatusCode: false });
+    const response = await request.get(withBase(path, siteBase), { failOnStatusCode: false });
     expect(response.status(), path).toBe(404);
   }
 });
 
-test('query-string input is not reflected into rendered content', async ({ page }) => {
+test('query-string input is not reflected into any production HTML page', async ({ page }) => {
   const probe = 'IKESAMA_SECURITY_PROBE_7f41c2';
 
-  for (const route of protectedPages) {
-    await page.goto(`${route}?q=${encodeURIComponent(probe)}`);
-    await expect(page.locator('body')).not.toContainText(probe);
+  for (const { artifact, route } of await getPublicHtmlPages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      await page.goto(`${route}?q=${encodeURIComponent(probe)}`);
+      await expect(page.locator('body')).not.toContainText(probe);
+      expect(await page.content(), artifact).not.toContain(probe);
+    });
   }
 });
 
-test('external links do not receive referrer context or opener access', async ({ page }) => {
-  await page.goto('/about/');
-
-  const github = page.getByRole('link', { name: 'GitHub', exact: true });
-  const rel = (await github.getAttribute('rel'))?.split(/\s+/) ?? [];
-
-  expect(rel).toContain('noopener');
-  expect(rel).toContain('noreferrer');
+test('every generated HTML artifact is reachable, including the 404 document', async ({ page }) => {
+  for (const { artifact, route } of await getPublicHtmlPages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      const response = await page.goto(route);
+      expect(response, artifact).not.toBeNull();
+      expect(response?.status(), artifact).toBeLessThan(400);
+    });
+  }
 });
