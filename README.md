@@ -3,8 +3,6 @@
 [![CI](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml)
 
-QA / Software Engineering、テスト自動化、開発者向けツール、フロントエンド、個人開発について扱う個人サイトです。
-
 コンテンツ中心のサイトにフルSPAを持ち込まず、**Astroで静的HTMLを生成し、状態を持つUIだけReactでhydrateする** static-first / islands architecture を採用しています。
 
 ## Design goals
