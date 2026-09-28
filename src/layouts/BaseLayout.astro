@@ -20,6 +20,7 @@ const base = import.meta.env.BASE_URL;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="referrer" content="no-referrer" />
     <link rel="canonical" href={canonical} />
     <link
       rel="alternate"
@@ -29,20 +30,8 @@ const base = import.meta.env.BASE_URL;
     />
     <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg', base)} />
     <link rel="icon" type="image/png" sizes="32x32" href={withBase('/favicon-32x32.png', base)} />
-    <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <script is:inline>
-      (() => {
-        try {
-          const saved = localStorage.getItem('theme');
-          const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = saved === 'light' || saved === 'dark' ? saved : dark ? 'dark' : 'light';
-          document.documentElement.dataset.theme = theme;
-        } catch {
-          document.documentElement.dataset.theme = 'light';
-        }
-      })();
-    </script>
+    <script is:inline src={withBase('/theme-init.js', base)}></script>
   </head>
   <body>
     <div class="page-shell">
