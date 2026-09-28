@@ -5,10 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout
-  title="About — Ikesama"
-  description="About Ikesama, a QA Engineer / Software Engineer."
->
+<BaseLayout title="About — Ikesama" description="About Ikesama, a QA Engineer / Software Engineer.">
   <article class="article prose-page">
     <header class="article-header">
       <h1>About</h1>
@@ -25,19 +22,23 @@ const base = import.meta.env.BASE_URL;
       <h2>What I work with</h2>
 
       <p>
-        Java · Python · TypeScript<br />
-        Karate · Playwright · JUnit<br />
-        GitHub Actions · Jenkins · Docker<br />
+        Java · Python · TypeScript
+        <br />
+        Karate · Playwright · JUnit
+        <br />
+        GitHub Actions · Jenkins · Docker
+        <br />
         Astro · React
       </p>
 
-      <p>
-        I also build small tools and Minecraft-related software as personal projects.
-      </p>
+      <p>I also build small tools and Minecraft-related software as personal projects.</p>
 
       <p>
         Find me on
-        <a href="https://github.com/bosatsuKing" rel="me noopener noreferrer">GitHub</a>, or read my
+        <a href="https://github.com/bosatsuKing" rel="me noopener noreferrer">
+          GitHub
+        </a>
+        , or read my
         <a href={withBase('/', base)}>Blog</a>.
       </p>
     </div>
