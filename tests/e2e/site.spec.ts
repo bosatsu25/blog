@@ -10,7 +10,10 @@ test('home page matches the compact blog information architecture', async ({ pag
   await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Projects', exact: true })).toBeVisible();
 
-  await expect(page.getByRole('link', { name: 'RSS', exact: true })).toHaveAttribute('href', /rss\.xml$/);
+  await expect(page.getByRole('link', { name: 'RSS', exact: true })).toHaveAttribute(
+    'href',
+    /rss\.xml$/,
+  );
   await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute(
     'href',
     /favicon\.svg$/,
@@ -33,7 +36,8 @@ test('theme toggle changes the document theme', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
-  const button = page.getByRole('button', { name: /mode に切り替える/ });
+  const header = page.locator('.top');
+  const button = header.getByRole('button', { name: /mode に切り替える/ });
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
 
