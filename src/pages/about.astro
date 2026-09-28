@@ -1,27 +1,20 @@
 ---
-import { withBase } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="About — Ikesama" description="About Ikesama and this site.">
-  <article class="prose-page">
-    <h1 class="page-title">About</h1>
-
-    <p>
-      QA Engineer / Software Engineerとして、ソフトウェア品質、テスト自動化、
-      開発支援ツール、フロントエンド、個人開発に取り組んでいます。
-    </p>
-
-    <p>
-      このサイトはAstroとTypeScriptを中心に、静的HTMLを基本として構築しています。
-      インタラクションが必要な箇所だけReact Islandsを使い、表示の軽さと保守性を優先しています。
-    </p>
-
-    <p>
-      個人開発は <a href={withBase('/projects/', base)}>Projects</a>、
-      技術メモは <a href={withBase('/writing/', base)}>Writing</a> にまとめています。
-    </p>
+  <article class="article prose-page">
+    <header class="article-header">
+      <h1>About</h1>
+    </header>
+    <div class="article-body">
+      <p>
+        QA Engineer / Software
+        Engineerとして、ソフトウェア品質、テスト自動化、開発支援ツールの設計と実装に取り組んでいます。
+      </p>
+      <p>
+        このサイト自体も、静的HTMLを基本にしながら、必要なUIだけReactで動かす構成にしています。技術を増やすことより、要件に対して必要な複雑さだけを持たせることを重視しています。
+      </p>
+    </div>
   </article>
 </BaseLayout>
