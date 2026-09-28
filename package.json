@@ -15,7 +15,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "fix": "prettier --write .",
-    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run test:e2e"
+    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run security:audit && npm run test:e2e && npm run test:security",
+    "security:audit": "node scripts/security-audit.mjs",
+    "test:security": "playwright test --config=playwright.security.config.ts"
   },
   "dependencies": {
     "@astrojs/react": "^7.0.0",
