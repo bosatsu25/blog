@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test';
 
-test('home page matches the compact blog information architecture', async ({ page }) => {
+test('home page exposes the blog and About navigation', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('link', { name: 'Ikesama', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: "Ikesama's Blog", exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Posts', exact: true })).toBeVisible();
 
   const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
   await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Projects', exact: true })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Projects', exact: true })).toHaveCount(0);
+  await expect(navigation.getByRole('link', { name: 'Writing', exact: true })).toHaveCount(0);
 
   await expect(page.getByRole('link', { name: 'RSS', exact: true })).toHaveAttribute(
     'href',
@@ -17,6 +18,27 @@ test('home page matches the compact blog information architecture', async ({ pag
   await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute(
     'href',
     /favicon\.svg$/,
+  );
+});
+
+test('about page presents the public profile without detailed personal information', async ({
+  page,
+}) => {
+  await page.goto('/about/');
+
+  await expect(page.getByRole('heading', { name: 'About', exact: true })).toBeVisible();
+  await expect(page.getByText("I'm Ikesama, a QA Engineer / Software Engineer.")).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What I work with', exact: true })).toBeVisible();
+  await expect(page.getByText('Java · Python · TypeScript')).toBeVisible();
+  await expect(page.getByText('Karate · Playwright · JUnit')).toBeVisible();
+
+  await expect(page.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/bosatsuKing',
+  );
+  await expect(page.getByRole('link', { name: 'Blog', exact: true })).toHaveAttribute(
+    'href',
+    /\/$/,
   );
 });
 
