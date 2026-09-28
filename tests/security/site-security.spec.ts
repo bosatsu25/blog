@@ -139,9 +139,10 @@ test('CSP does not break the interactive theme island', async ({ page }) => {
   await page.goto(withBase('/', siteBase));
 
   const html = page.locator('html');
-  const button = page.getByRole('button', { name: /mode に切り替える/ });
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
+  const currentLabel = before === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
+  const button = page.getByRole('button', { name: currentLabel });
 
   await expect(button).toBeEnabled();
   await button.click();
