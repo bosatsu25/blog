@@ -1,26 +1,21 @@
 ---
-import { siteConfig, withBase } from '../config/site';
 import { ThemeToggle } from './ThemeToggle';
 
 const base = import.meta.env.BASE_URL;
 ---
 
-<header class="site-header">
-  <div class="site-title">
-    <a href={withBase('/', base)}>{siteConfig.name}</a>
-  </div>
+<section class="top" aria-label="Site header">
+  <header>
+    <h1>
+      <a href={base}>Ikesama</a>
+    </h1>
+  </header>
 
-  <div class="header-actions">
-    <nav aria-label="Primary navigation">
-      <ul>
-        {siteConfig.navigation.map((item) => (
-          <li>
-            <a href={withBase(item.path, base)}>{item.label}</a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-
-    <ThemeToggle client:load />
-  </div>
-</header>
+  <nav aria-label="Primary navigation">
+    <ul>
+      <li><a href={`${base}about/`}>About</a></li>
+      <li><a href={`${base}projects/`}>Projects</a></li>
+      <li><ThemeToggle client:load /></li>
+    </ul>
+  </nav>
+</section>
