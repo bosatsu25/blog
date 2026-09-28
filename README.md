@@ -52,7 +52,6 @@ Markdown / Astro Content Collections
 | Unit Test       | Vitest                               |
 | E2E             | Playwright                           |
 | Static analysis | ESLint / Astro Check                 |
-| Security        | Astro CSP / security audit / Playwright |
 | Formatting      | Prettier                             |
 | CI/CD           | GitHub Actions                       |
 | Hosting         | GitHub Pages                         |
@@ -122,8 +121,6 @@ Vitest
 Astro Build
    |
 Playwright E2E
-   |
-Security Audit / Security E2E
 ```
 
 E2Eでは現在、デスクトップ / モバイル条件で以下を確認しています。
@@ -205,20 +202,3 @@ frontmatterはAstro Content Collectionsで検証されます。
 このサイト自体もポートフォリオの一部として扱います。
 
 機能を追加する際は、単に「使える技術を増やす」ことよりも、サイト要件に対してその技術が必要かを優先します。静的に解決できるものはAstroで静的に生成し、ブラウザ状態が必要な箇所だけをReact islandとして追加します。
-
-
-## Web security quality gate
-
-Security is treated as a continuously tested quality characteristic.
-
-The production build uses a restrictive Astro Content Security Policy, avoids third-party runtime requests, and is checked for accidental exposure of source files, environment files, dependency metadata, source maps, dangerous DOM sinks, and unnecessary browser attack surface.
-
-Run the security checks locally with:
-
-```bash
-npm run build
-npm run security:audit
-npm run test:security
-```
-
-The detailed threat model, automated checks, and intentionally deferred edge-layer controls are documented in [docs/security-testing.md](./docs/security-testing.md).
