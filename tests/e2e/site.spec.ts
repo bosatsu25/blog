@@ -36,7 +36,10 @@ test('about page presents the public profile without detailed personal informati
     'href',
     'https://github.com/bosatsuKing',
   );
-  await expect(page.getByRole('link', { name: 'Blog', exact: true })).toHaveAttribute('href', /\/$/);
+  await expect(page.getByRole('link', { name: 'Blog', exact: true })).toHaveAttribute(
+    'href',
+    /\/$/,
+  );
 });
 
 test('project filter narrows the visible projects', async ({ page }) => {
