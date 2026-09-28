@@ -1,4 +1,5 @@
 ---
+import { siteConfig, withBase } from '../config/site';
 import { ThemeToggle } from './ThemeToggle';
 
 const base = import.meta.env.BASE_URL;
@@ -7,14 +8,17 @@ const base = import.meta.env.BASE_URL;
 <section class="top" aria-label="Site header">
   <header>
     <h1>
-      <a href={base}>Ikesama</a>
+      <a href={withBase('/', base)}>{siteConfig.name}</a>
     </h1>
   </header>
 
   <nav aria-label="Primary navigation">
     <ul>
-      <li><a href={`${base}about/`}>About</a></li>
-      <li><a href={`${base}projects/`}>Projects</a></li>
+      {siteConfig.navigation.map((item) => (
+        <li>
+          <a href={withBase(item.path, base)}>{item.label}</a>
+        </li>
+      ))}
       <li><ThemeToggle client:load /></li>
     </ul>
   </nav>
