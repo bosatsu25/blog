@@ -8,10 +8,7 @@ interface Props {
   description?: string;
 }
 
-const {
-  title = siteConfig.name,
-  description = siteConfig.description,
-} = Astro.props;
+const { title = siteConfig.name, description = siteConfig.description } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const base = import.meta.env.BASE_URL;
@@ -24,7 +21,12 @@ const base = import.meta.env.BASE_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" type="application/rss+xml" title={siteConfig.name} href={withBase('/rss.xml', base)} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={siteConfig.name}
+      href={withBase('/rss.xml', base)}
+    />
     <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg', base)} />
     <link rel="icon" type="image/png" sizes="32x32" href={withBase('/favicon-32x32.png', base)} />
     <meta name="generator" content={Astro.generator} />
