@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, relative, resolve, sep } from 'node:path';
 
@@ -101,9 +102,9 @@ for (const file of await walk(distRoot)) {
 }
 
 if (failures.length > 0) {
-  console.error('Security audit failed:');
-  for (const failure of failures) console.error(`- ${failure}`);
+  process.stderr.write('Security audit failed:\n');
+  for (const failure of failures) process.stderr.write(`- ${failure}\n`);
   process.exit(1);
 }
 
-console.log('Security audit passed.');
+process.stdout.write('Security audit passed.\n');
