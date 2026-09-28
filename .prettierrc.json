@@ -2,7 +2,6 @@
   "plugins": ["prettier-plugin-astro"],
   "singleQuote": true,
   "semi": true,
-  "endOfLine": "auto",
   "trailingComma": "all",
   "printWidth": 100,
   "overrides": [
