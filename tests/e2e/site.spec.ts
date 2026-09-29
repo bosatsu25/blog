@@ -54,31 +54,68 @@ test('project filter narrows the visible projects', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'VoxelWeave', exact: true })).toHaveCount(0);
 });
 
+test('header navigation and theme toggle stay aligned on desktop and mobile', async ({ page }) => {
+  await page.goto('/');
+
+  const actions = page.locator('.header-actions');
+  const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+  const themeToggle = page.getByRole('button', { name: 'Dark mode' });
+
+  await expect(actions).toHaveCSS('flex-direction', 'row');
+  await expect(actions).toHaveCSS('flex-wrap', 'nowrap');
+
+  const navigationBox = await navigation.boundingBox();
+  const toggleBox = await themeToggle.boundingBox();
+  expect(navigationBox).not.toBeNull();
+  expect(toggleBox).not.toBeNull();
+  expect(
+    Math.abs(
+      (navigationBox?.y ?? 0) +
+        (navigationBox?.height ?? 0) / 2 -
+        ((toggleBox?.y ?? 0) + (toggleBox?.height ?? 0) / 2),
+    ),
+  ).toBeLessThan(4);
+});
+
 test('theme toggle changes the document theme', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
   const header = page.getByRole('banner');
   const navigation = header.getByRole('navigation', { name: 'Primary navigation' });
-  const button = header.getByRole('button');
+  const button = header.getByRole('button', { name: 'Dark mode' });
 
   await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
   await expect(button).toBeVisible();
+  await expect(button).toHaveAttribute('title', 'Toggle dark mode');
 
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
-  const currentLabel = before === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
-  const nextLabel = expected === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
-
-  await expect(button).toHaveAccessibleName(currentLabel);
-  await expect(button).toHaveAttribute('title', currentLabel);
-
   await expect(button).toBeEnabled();
   await button.click();
 
   await expect(html).toHaveAttribute('data-theme', expected);
-  await expect(button).toHaveAccessibleName(nextLabel);
-  await expect(button).toHaveAttribute('title', nextLabel);
   await expect(button).toHaveAttribute('data-hydrated', 'true');
+  await expect(button).toHaveAttribute('aria-pressed', String(expected === 'dark'));
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expected);
+});
+
+test('RSS feed contains valid XML and links to published writing', async ({ page }) => {
+  await page.goto('/');
+  const response = await page.request.get('/rss.xml');
+  expect(response.ok()).toBe(true);
+  expect(response.headers()['content-type']).toContain('application/rss+xml');
+
+  const xml = await response.text();
+  const parsedFeed = await page.evaluate((feed) => {
+    const document = new DOMParser().parseFromString(feed, 'application/xml');
+    return {
+      hasParseError: document.querySelector('parsererror') !== null,
+      itemLinks: Array.from(document.querySelectorAll('item link'), (link) => link.textContent),
+    };
+  }, xml);
+
+  expect(parsedFeed.hasParseError).toBe(false);
+  const itemPaths = parsedFeed.itemLinks.flatMap((link) => (link ? [new URL(link).pathname] : []));
+  expect(itemPaths).toContain('/writing/quality-gates-for-a-small-site/');
 });

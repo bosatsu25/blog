@@ -63,17 +63,51 @@ test('every production HTML page enforces restrictive CSP and referrer policy', 
         .getAttribute('content');
 
       expect(csp, artifact).toBeTruthy();
-      expect(csp, artifact).toContain("default-src 'none'");
-      expect(csp, artifact).toContain("connect-src 'none'");
-      expect(csp, artifact).toContain("object-src 'none'");
-      expect(csp, artifact).toContain("base-uri 'none'");
-      expect(csp, artifact).toContain("form-action 'none'");
-      expect(csp, artifact).toContain("frame-src 'none'");
-      expect(csp, artifact).toContain("media-src 'none'");
-      expect(csp, artifact).toContain("worker-src 'none'");
-      expect(csp, artifact).toContain("img-src 'self' data:");
-      expect(csp, artifact).toContain("font-src 'self'");
-      expect(csp, artifact).not.toMatch(/'unsafe-(?:inline|eval)'/);
+      const directives = (csp ?? '')
+        .split(';')
+        .map((directive) => directive.trim().split(/\s+/))
+        .filter(([name]) => name !== undefined && name.length > 0);
+      const sourceMap = new Map(directives.map(([name, ...sources]) => [name, sources]));
+      const sources = (name: string): string[] => sourceMap.get(name) ?? [];
+      const allowedGeneratedSources = (name: string): string[] => {
+        const values = sources(name);
+        expect(values).toContain("'self'");
+        for (const value of values.filter((source) => source !== "'self'")) {
+          expect(value).toMatch(/^'sha256-[A-Za-z0-9+/]+={0,2}'$/);
+        }
+        return values.filter((source) => source !== "'self'");
+      };
+
+      expect(sourceMap.size).toBe(directives.length);
+      expect([...sourceMap.keys()].sort()).toEqual(
+        [
+          'base-uri',
+          'connect-src',
+          'default-src',
+          'font-src',
+          'form-action',
+          'frame-src',
+          'img-src',
+          'media-src',
+          'object-src',
+          'script-src',
+          'style-src',
+          'worker-src',
+        ].sort(),
+      );
+      expect(sources('default-src')).toEqual(["'none'"]);
+      expect(sources('connect-src')).toEqual(["'none'"]);
+      expect(sources('object-src')).toEqual(["'none'"]);
+      expect(sources('base-uri')).toEqual(["'none'"]);
+      expect(sources('form-action')).toEqual(["'none'"]);
+      expect(sources('frame-src')).toEqual(["'none'"]);
+      expect(sources('media-src')).toEqual(["'none'"]);
+      expect(sources('worker-src')).toEqual(["'none'"]);
+      expect(sources('img-src')).toEqual(["'self'", 'data:']);
+      expect(sources('font-src')).toEqual(["'self'"]);
+      allowedGeneratedSources('script-src');
+      allowedGeneratedSources('style-src');
+      expect(csp).not.toMatch(/'unsafe-(?:inline|eval)'|\*/);
       await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer');
     });
   }
@@ -139,14 +173,16 @@ test('CSP does not break the interactive theme island', async ({ page }) => {
   await page.goto(withBase('/', siteBase));
 
   const html = page.locator('html');
+  const button = page.getByRole('button', { name: 'Dark mode' });
   const before = await html.getAttribute('data-theme');
   const expected = before === 'dark' ? 'light' : 'dark';
-  const currentLabel = before === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
-  const button = page.getByRole('button', { name: currentLabel });
 
   await expect(button).toBeEnabled();
+  await expect(button).toHaveAttribute('title', 'Toggle dark mode');
   await button.click();
   await expect(html).toHaveAttribute('data-theme', expected);
+  await expect(button).toHaveAttribute('aria-pressed', String(expected === 'dark'));
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expected);
 
   expect(errors).toEqual([]);
 });

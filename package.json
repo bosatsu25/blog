@@ -14,19 +14,25 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:accessibility": "playwright test --config=playwright.accessibility.config.ts",
+    "test:smoke": "playwright test --config=playwright.production.config.ts",
     "fix": "prettier --write .",
-    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run security:audit && npm run test:e2e && npm run test:security",
+    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run security:audit && npm run test:e2e && npm run test:security && npm run test:accessibility && npm run performance:budget && npm run audit",
     "security:audit": "node scripts/security-audit.mjs",
-    "test:security": "playwright test --config=playwright.security.config.ts"
+    "test:security": "playwright test --config=playwright.security.config.ts",
+    "performance:budget": "node scripts/performance-budget.mjs",
+    "audit": "npm audit --audit-level=high"
   },
   "dependencies": {
     "@astrojs/react": "^7.0.0",
+    "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.0.0",
