@@ -2,80 +2,86 @@ name: CI
 
 on:
   pull_request:
-    paths-ignore:
-      - README.md
   push:
     branches: [main]
-    paths-ignore:
-      - README.md
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   SITE_BASE: /
 
 jobs:
   quality:
+    name: Quality gate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: npm
-      - run: npm ci
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm run check
-      - run: npm run test
-      - run: npm run build
-      - run: npm run security:audit
+      - name: Install dependencies
+        run: npm ci
+      - name: Check formatting
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run test
+      - name: Build and type-check
+        run: npm run build
+      - name: Static security audit
+        run: npm run security:audit
+      - name: Performance budget
+        run: npm run performance:budget
+      - name: Dependency audit
+        run: npm run audit
 
-  e2e:
+  browser:
+    name: Browser gate
+    needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npm run test:e2e
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: E2E
+        run: npm run test:e2e
+      - name: Security browser tests
+        run: npm run test:security
+      - name: Accessibility
+        run: npm run test:accessibility
 
-  security:
+  ci-gate:
+    name: CI gate
+    if: always()
+    needs: [quality, browser]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:security
-
-  accessibility:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:accessibility
-
-  performance:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm run performance:budget
+      - name: Verify required gates
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          echo "quality=$QUALITY_RESULT"
+          echo "browser=$BROWSER_RESULT"
+          test "$QUALITY_RESULT" = "success"
+          test "$BROWSER_RESULT" = "success"
