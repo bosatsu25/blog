@@ -1,13 +1,15 @@
-# ikesama.dev
+# 仏の道
 
 [![CI](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml)
 
-Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** の個人ブログです。
+仏教、日々、技術についての学びや気づきを綴る個人ブログです。Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** を採用しています。
 
 ## Design goals
 
-- 記事とプロジェクトを主役にしたミニマルな情報設計
+- 記事を主役にした静かな情報設計
+- lotus source imageをブランド画像とfaviconに一貫して使用
+- 単一カテゴリーの記事をbuild-time archiveとして年月別に整理
 - JavaScriptを必要な場所だけに限定する
 - Markdown + Astro Content Collectionsで記事を管理する
 - TypeScript / Astro Checkで型・構造を検証する
@@ -28,10 +30,10 @@ Markdown / Astro Content Collections
         Static HTML + CSS
           |           |
           |           +--> React island: ThemeToggle
-          |
-          +--------------> React island: ProjectFilter
                 |
                 +--> Article-only Content Protection
+                |
+                +--> Build-time category/year/month Archive
                 |
                 v
         Static artifact
@@ -40,7 +42,7 @@ Markdown / Astro Content Collections
        Current: GitHub Pages
 ```
 
-ページ本体はビルド時に静的生成されます。Reactはテーマ切り替えやプロジェクト絞り込みなど、クライアント状態が必要なUIだけに使用します。
+ページ本体とカテゴリー・年月別Archiveはビルド時に静的生成されます。Reactはテーマ切り替えなど、クライアント状態が必要なUIだけに使用します。
 
 設計の詳細は [ARCHITECTURE.md](./ARCHITECTURE.md)、deployment contractは [docs/deployment.md](./docs/deployment.md)、外部リンク契約は [docs/external-links.md](./docs/external-links.md)、セキュリティ検証方針は [docs/security-testing.md](./docs/security-testing.md) を参照してください。
 
@@ -64,14 +66,14 @@ Markdown / Astro Content Collections
 
 ## Pages
 
-| Route           | Purpose                         |
-| --------------- | ------------------------------- |
-| `/`             | Home / Recent Writing           |
-| `/about/`       | Profile                         |
-| `/projects/`    | Projects and category filtering |
-| `/writing/`     | Articles                        |
-| `/writing/:id/` | Article detail                  |
-| `/404.html`     | Not found                       |
+| Route           | Purpose                            |
+| --------------- | ---------------------------------- |
+| `/`             | Blog home / recent articles        |
+| `/archive/`     | Articles grouped by category/date  |
+| `/about/`       | Profile                            |
+| `/writing/`     | Compatibility page linking Archive |
+| `/writing/:id/` | Article detail                     |
+| `/404.html`     | Not found                          |
 
 ## Local development
 
@@ -175,7 +177,7 @@ E2EではChromium / Firefox / WebKitとmobile条件で主要UIを検証します
 
 主な契約:
 
-- Primary navigation / Theme switching / Project filtering
+- Primary navigation / Theme switching / category-year-month Archive
 - Article Content Protection
 - Secure External Links
 - CSP / third-party request / generated artifact security
@@ -196,16 +198,14 @@ Markdown内の外部HTTPSリンクはbuild-timeで分類され、destination hos
 title: 'Article title'
 description: 'Short description'
 publishedAt: 2026-09-28
-tags:
-  - Astro
-  - Frontend
+category: 技術
 draft: false
 ---
 
 本文
 ```
 
-frontmatterはAstro Content Collectionsで検証されます。
+`category`は`仏教`、`日々`、`技術`のいずれか1つを指定します。frontmatterはAstro Content Collectionsで検証されます。lotusの原画は`design/lotus-source.png`に保存し、`public/`内のfavicon等は原画からリサイズして生成します。原画自体は配信artifactに含めません。
 
 ## Dependency updates
 

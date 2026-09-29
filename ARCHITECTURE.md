@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a content-first personal engineering site that remains fast and understandable while still demonstrating current frontend engineering practices.
+Build a quiet personal blog for sharing reflections on Buddhism, daily life, and technology while keeping the site fast and understandable.
 
 ## Principles
 
@@ -14,6 +14,7 @@ Build a content-first personal engineering site that remains fast and understand
 6. **Article content protection is scoped** — browser interaction deterrents apply only to article bodies and do not alter the shared site shell.
 7. **External links are secured at build time** — Markdown links are classified and decorated
    from their actual destination URL.
+8. **Archive is generated at build time** — one validated category per article is grouped by UTC year and month.
 
 ## Runtime boundary
 
@@ -22,19 +23,24 @@ Build time
   Markdown
      +
   Astro components
+     +
+  category/year/month archive
      |
      v
   Static HTML/CSS  ----------------------+
                                            |
 Browser                                    |
-  React island: ThemeToggle                |
-  React island: ProjectFilter              |
-  Article body: selection/copy deterrents  |
+React island: ThemeToggle                |
+Article body: selection/copy deterrents  |
      |                                     |
      +------------- selective hydration ---+
 ```
 
 Article pages add local interaction deterrents for selection, copying, cutting, context menus, dragging, and print output, plus a repeated visual watermark. These controls apply only to `.article-body`; they do not make publicly served content confidential or prevent retrieval through developer tools, source inspection, direct HTTP requests, OCR, screenshots, recordings, or external cameras.
+
+Article categories are constrained by the content schema. The Archive groups published articles by category, UTC year, and month during static generation; no client-side filter or runtime collection request is required. `/writing/` remains as a compatibility page pointing readers to `/archive/`.
+
+The original user-provided lotus image is retained at `design/lotus-source.png`; optimized resized copies are used for the brand mark, favicon, and Apple touch icon. The source image is not copied into the public artifact.
 
 Markdown article links pass through a build-time rehype transformation that validates URL
 schemes and adds the external-link contract without client-side JavaScript. See

@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-test('home page exposes the blog and About navigation', async ({ page }) => {
+test('home page exposes the blog identity and primary navigation', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('link', { name: "Ikesama's Blog", exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Posts', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: '仏の道 — Home', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '最近の記事', exact: true })).toBeVisible();
 
   const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+  await expect(navigation.getByRole('link', { name: 'Archive', exact: true })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Projects', exact: true })).toHaveCount(0);
   await expect(navigation.getByRole('link', { name: 'Writing', exact: true })).toHaveCount(0);
@@ -18,6 +19,14 @@ test('home page exposes the blog and About navigation', async ({ page }) => {
   await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute(
     'href',
     /favicon\.svg$/,
+  );
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    'href',
+    /apple-touch-icon\.png$/,
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    /lotus-512\.png$/,
   );
 });
 
@@ -36,22 +45,35 @@ test('about page presents the public profile without detailed personal informati
     'href',
     'https://github.com/bosatsuKing',
   );
-  await expect(page.getByRole('link', { name: 'Blog', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: '仏の道', exact: true })).toHaveAttribute(
     'href',
     /\/$/,
   );
 });
 
-test('project filter narrows the visible projects', async ({ page }) => {
-  await page.goto('/projects/');
+test('archive groups articles by category, year, and month', async ({ page }) => {
+  await page.goto('/archive/');
 
-  const qaFilter = page.getByRole('button', { name: 'QA', exact: true });
-  await expect(qaFilter).toBeEnabled();
-  await qaFilter.click();
+  await expect(page.getByRole('heading', { name: '記事一覧', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '技術', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '2026', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '9月', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Why this site is static-first', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Quality gates for a small site', exact: true }),
+  ).toBeVisible();
+});
 
-  await expect(qaFilter).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('heading', { name: 'ReflowPress', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'VoxelWeave', exact: true })).toHaveCount(0);
+test('/writing/ remains a compatible link to the Archive', async ({ page }) => {
+  await page.goto('/writing/');
+
+  await expect(page.getByRole('heading', { name: '記事一覧', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Archiveを開く →', exact: true })).toHaveAttribute(
+    'href',
+    '/archive/',
+  );
 });
 
 test('header navigation and theme toggle stay aligned on desktop and mobile', async ({ page }) => {
@@ -85,6 +107,7 @@ test('theme toggle changes the document theme', async ({ page }) => {
   const navigation = header.getByRole('navigation', { name: 'Primary navigation' });
   const button = header.getByRole('button', { name: 'Dark mode' });
 
+  await expect(navigation.getByRole('link', { name: 'Archive', exact: true })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'About', exact: true })).toBeVisible();
   await expect(button).toBeVisible();
   await expect(button).toHaveAttribute('title', 'Toggle dark mode');

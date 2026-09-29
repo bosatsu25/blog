@@ -4,7 +4,7 @@ import { normalizeBase, resolveProductionUrl, withBase } from '../../src/config/
 const productionURL = resolveProductionUrl(process.env.PRODUCTION_URL);
 const siteBase = normalizeBase(productionURL.pathname);
 const publicPath = (path: string): string => withBase(path, siteBase);
-const htmlPages = ['/', '/about/', '/writing/quality-gates-for-a-small-site/'];
+const htmlPages = ['/', '/archive/', '/about/', '/writing/quality-gates-for-a-small-site/'];
 
 test.describe('production smoke', () => {
   for (const path of htmlPages) {
@@ -92,10 +92,16 @@ test.describe('production smoke', () => {
     ).toBe(true);
   });
 
-  test('favicon is served as SVG', async ({ request }) => {
+  test('brand image, favicon, and Apple touch icon are served', async ({ request }) => {
     const response = await request.get(publicPath('/favicon.svg'));
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('image/svg+xml');
+
+    for (const path of ['/favicon-32x32.png', '/apple-touch-icon.png', '/lotus-512.png']) {
+      const image = await request.get(publicPath(path));
+      expect(image.status(), `${path} should be served`).toBe(200);
+      expect(image.headers()['content-type']).toContain('image/png');
+    }
   });
 
   test('theme toggle and skip link work on the deployed site', async ({ page }) => {
@@ -124,13 +130,29 @@ test.describe('production smoke', () => {
 
     const rendered = await page.goto(missingPath, { waitUntil: 'domcontentloaded' });
     expect(rendered?.status()).toBe(404);
-    await expect(page.getByRole('heading', { name: /Page not found/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /ページが見つかりません/ })).toBeVisible();
   });
 
   test('main navigation still points to viable public pages', async ({ page }) => {
     await page.goto(publicPath('/'));
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Archive', exact: true })).toHaveAttribute(
+      'href',
+      publicPath('/archive/'),
+    );
     await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', /\/about\//);
+  });
+
+  test('social metadata references the deployed lotus brand asset', async ({ page }) => {
+    await page.goto(publicPath('/'));
+    await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
+      'content',
+      '仏の道',
+    );
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      new URL(publicPath('/lotus-512.png'), productionURL.origin).href,
+    );
   });
 
   test('article links expose secure external destinations without leaving production', async ({

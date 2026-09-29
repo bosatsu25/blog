@@ -2,13 +2,13 @@
 title: 'Why this site is static-first'
 description: 'AstroとReact Islandsを使い分ける理由。'
 publishedAt: 2026-09-28
-tags: ['Astro', 'Frontend', 'Architecture']
+category: 技術
 draft: false
 ---
 
 このサイトは、ページ全体をSPAとして実装していません。
 
-本文やナビゲーションの大部分はビルド時にHTMLへ変換し、テーマ切り替えやProjectsの絞り込みなど、状態を必要とする部分だけReactで動かしています。
+本文やナビゲーションの大部分はビルド時にHTMLへ変換し、テーマ切り替えなど、状態を必要とする部分だけReactで動かしています。
 
 ## Why
 

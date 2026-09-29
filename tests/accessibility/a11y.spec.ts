@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const routes = ['/', '/about/', '/writing/quality-gates-for-a-small-site/'];
+const routes = ['/', '/archive/', '/about/', '/writing/quality-gates-for-a-small-site/'];
 
 test.describe('accessibility quality gate', () => {
   for (const route of routes) {
@@ -41,6 +41,13 @@ test.describe('accessibility quality gate', () => {
           ((toggleBox?.y ?? 0) + (toggleBox?.height ?? 0) / 2),
       ),
     ).toBeLessThan(4);
+  });
+
+  test('archive headings expose the category and date hierarchy', async ({ page }) => {
+    await page.goto('/archive/');
+    await expect(page.getByRole('heading', { name: '技術', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '2026', level: 3 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '9月', level: 4 })).toBeVisible();
   });
 
   test('skip link is present and keyboard navigation reaches the main content', async ({

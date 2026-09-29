@@ -15,9 +15,12 @@ export type DeploymentConfig = Readonly<{
 }>;
 
 export const siteConfig = {
-  name: "Ikesama's Blog",
-  description: 'Software quality, test automation, frontend engineering and personal projects.',
-  navigation: [{ label: 'About', path: '/about/' }],
+  name: '仏の道',
+  description: '仏の道を歩みながら、学びや日々の気づきを綴る個人ブログ。',
+  navigation: [
+    { label: 'Archive', path: '/archive/' },
+    { label: 'About', path: '/about/' },
+  ],
 } as const satisfies SiteConfig;
 
 function parseAbsoluteHttpUrl(value: string, variableName: string): URL {

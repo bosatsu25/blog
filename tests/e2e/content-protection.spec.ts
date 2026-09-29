@@ -76,6 +76,33 @@ test('article protection stays within the article body', async ({ page }) => {
   expect(outsideShortcutPrevented).toBe(false);
 });
 
+test('content protection does not apply to the About page', async ({ page }) => {
+  await page.goto('/about/');
+
+  await expect(page.locator('.article-body')).toHaveCount(0);
+  await expect(page.locator('.prose-page__body')).toHaveCSS('user-select', 'auto');
+
+  const selectionAllowed = await page.evaluate(() => {
+    const aboutBody = document.querySelector('.prose-page__body');
+    if (!aboutBody) throw new Error('About content was not rendered.');
+
+    const range = document.createRange();
+    range.selectNodeContents(aboutBody);
+    window.getSelection()?.addRange(range);
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'c',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+    window.getSelection()?.removeAllRanges();
+    return !event.defaultPrevented;
+  });
+  expect(selectionAllowed).toBe(true);
+});
+
 test('article body is omitted from print and PDF output', async ({ page }) => {
   await page.goto(articleRoute);
   await page.emulateMedia({ media: 'print' });
