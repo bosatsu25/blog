@@ -280,6 +280,11 @@ a:focus-visible {
 }
 
 .article-body {
+  -webkit-user-select: none;
+  user-select: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Ctext x='12' y='90' transform='rotate(-22 12 90)' fill='%23888888' fill-opacity='.13' font-family='sans-serif' font-size='16'%3EIkesama%20%C2%B7%20ikesama.dev%3C/text%3E%3C/svg%3E");
+  background-repeat: repeat;
+
   h2 {
     font-size: 1.3em;
   }
@@ -360,6 +365,12 @@ a:focus-visible {
   .token.function,
   .token.class-name {
     font-weight: 700;
+  }
+}
+
+@media print {
+  .article-body {
+    display: none !important;
   }
 }
 

@@ -129,6 +129,9 @@ E2Eでは現在、デスクトップ / モバイル条件で以下を確認し�
 - Primary navigation
 - Project category filtering
 - Theme switching
+- Article content protection in Chromium, Firefox, WebKit, and mobile WebKit
+
+記事本文では通常のブラウザUIによる選択・コピー・印刷等を抑止し、繰り返し表示するwatermarkで転載を抑止します。公開Web技術の性質上、DevTools、View Source、direct HTTP retrieval、OCR、OS screenshot、screen recording、external cameraを完全に防止するものではありません。
 
 ## Writing
 

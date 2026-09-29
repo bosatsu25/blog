@@ -11,6 +11,7 @@ Build a content-first personal engineering site that remains fast and understand
 3. **Typed content** — article frontmatter is validated by Astro Content Collections + Zod.
 4. **Automated quality gates** — formatting, linting, type checking, unit tests, build, and E2E are CI responsibilities.
 5. **GitHub Pages compatible** — no server runtime is required.
+6. **Article content protection is scoped** — browser interaction deterrents apply only to article bodies and do not alter the shared site shell.
 
 ## Runtime boundary
 
@@ -26,9 +27,12 @@ Build time
 Browser                                    |
   React island: ThemeToggle                |
   React island: ProjectFilter              |
+  Article body: selection/copy deterrents  |
      |                                     |
      +------------- selective hydration ---+
 ```
+
+Article pages add local interaction deterrents for selection, copying, cutting, context menus, dragging, and print output, plus a repeated visual watermark. These controls apply only to `.article-body`; they do not make publicly served content confidential or prevent retrieval through developer tools, source inspection, direct HTTP requests, OCR, screenshots, recordings, or external cameras.
 
 ## Why not a full React SPA?
 
