@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildAbsoluteUrl, normalizeBase, withBase } from './site';
+import {
+  buildAbsoluteUrl,
+  normalizeBase,
+  resolveDeploymentConfig,
+  resolveProductionUrl,
+  withBase,
+  withoutBase,
+} from './site';
 
 describe('withBase', () => {
   it('keeps root-relative paths unchanged for the root base', () => {
@@ -8,34 +15,90 @@ describe('withBase', () => {
     expect(withBase('/rss.xml', '/')).toBe('/rss.xml');
   });
 
-  it('adds the GitHub Pages base prefix when configured', () => {
-    expect(withBase('/', '/ikesama.dev')).toBe('/ikesama.dev/');
-    expect(withBase('/about/', '/ikesama.dev')).toBe('/ikesama.dev/about/');
-    expect(withBase('/rss.xml', '/ikesama.dev/')).toBe('/ikesama.dev/rss.xml');
+  it('adds the configured deployment base prefix', () => {
+    expect(withBase('/', '/project')).toBe('/project/');
+    expect(withBase('/about/', '/project')).toBe('/project/about/');
+    expect(withBase('/rss.xml', '/project/')).toBe('/project/rss.xml');
   });
 
   it('normalizes trailing slash differences consistently', () => {
-    expect(withBase('/about/', '/ikesama.dev/')).toBe('/ikesama.dev/about/');
-    expect(withBase('/about/', '/ikesama.dev')).toBe('/ikesama.dev/about/');
-    expect(withBase('about', '/ikesama.dev')).toBe('/ikesama.dev/about');
+    expect(withBase('/about/', '/project/')).toBe('/project/about/');
+    expect(withBase('/about/', '/project')).toBe('/project/about/');
+    expect(withBase('about', '/project')).toBe('/project/about');
+  });
+});
+
+describe('withoutBase', () => {
+  it('removes a configured base path once and leaves root paths unchanged', () => {
+    expect(withoutBase('/ikesama.dev/', '/ikesama.dev/')).toBe('/');
+    expect(withoutBase('/ikesama.dev/about/', '/ikesama.dev')).toBe('/about/');
+    expect(withoutBase('/about/', '/')).toBe('/about/');
+    expect(withoutBase('/ikesama.devil/about/', '/ikesama.dev')).toBe('/ikesama.devil/about/');
   });
 });
 
 describe('normalizeBase', () => {
-  it('keeps the root path as root and preserves a non-root base', () => {
+  it('normalizes root and non-root paths with one trailing slash', () => {
     expect(normalizeBase('/')).toBe('/');
-    expect(normalizeBase('/ikesama.dev')).toBe('/ikesama.dev/');
-    expect(normalizeBase('/ikesama.dev/')).toBe('/ikesama.dev/');
+    expect(normalizeBase('/project')).toBe('/project/');
+    expect(normalizeBase('/project/')).toBe('/project/');
   });
+
+  it.each(['project', 'project/', '//project', '/project//', '/project/../root', '/project?x=1'])(
+    'rejects malformed base %s',
+    (base) => {
+      expect(() => normalizeBase(base)).toThrow(/SITE_BASE/);
+    },
+  );
 });
 
 describe('buildAbsoluteUrl', () => {
   it('builds a full absolute URL from the configured base and origin', () => {
-    expect(buildAbsoluteUrl('/ikesama.dev', 'https://bosatsuking.github.io', '/')).toBe(
-      'https://bosatsuking.github.io/ikesama.dev/',
+    expect(buildAbsoluteUrl('/project', 'https://example.test', '/')).toBe(
+      'https://example.test/project/',
     );
-    expect(buildAbsoluteUrl('/ikesama.dev', 'https://bosatsuking.github.io', '/rss.xml')).toBe(
-      'https://bosatsuking.github.io/ikesama.dev/rss.xml',
+    expect(buildAbsoluteUrl('/project', 'https://example.test', '/rss.xml')).toBe(
+      'https://example.test/project/rss.xml',
     );
+  });
+});
+
+describe('resolveDeploymentConfig', () => {
+  it.each([
+    [{ SITE_URL: 'https://example.test', SITE_BASE: '/' }, 'https://example.test/', '/'],
+    [
+      { SITE_URL: 'https://example.test/ikesama.dev', SITE_BASE: '/ikesama.dev' },
+      'https://example.test/ikesama.dev/',
+      '/ikesama.dev/',
+    ],
+  ])('resolves valid deployment shape %#', (environment, siteUrl, base) => {
+    expect(resolveDeploymentConfig(environment)).toEqual({ siteUrl, base });
+  });
+
+  it('keeps local development defaults without weakening build validation', () => {
+    expect(resolveDeploymentConfig({})).toEqual({
+      siteUrl: 'http://localhost:4321/',
+      base: '/',
+    });
+    expect(() => resolveDeploymentConfig({}, true)).toThrow(/require both SITE_URL and SITE_BASE/);
+  });
+
+  it.each([
+    [{ SITE_URL: 'relative', SITE_BASE: '/' }],
+    [{ SITE_URL: 'https://example.test', SITE_BASE: 'project' }],
+    [{ SITE_URL: 'https://example.test/project', SITE_BASE: '/' }],
+    [{ SITE_URL: 'https://example.test', SITE_BASE: '/project' }],
+    [{ SITE_URL: 'https://example.test/?query=1', SITE_BASE: '/' }],
+  ])('rejects invalid deployment configuration %#', (environment) => {
+    expect(() => resolveDeploymentConfig(environment, true)).toThrow();
+  });
+});
+
+describe('resolveProductionUrl', () => {
+  it('requires a provider-neutral production URL and normalizes its base path', () => {
+    expect(resolveProductionUrl('https://example.test/project').href).toBe(
+      'https://example.test/project/',
+    );
+    expect(() => resolveProductionUrl(undefined)).toThrow(/PRODUCTION_URL/);
   });
 });

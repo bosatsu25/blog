@@ -15,7 +15,7 @@ Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとして
 - TypeScript / Astro Checkで型・構造を検証する
 - Unit / E2E / Security / Accessibility / PerformanceをCIで自動検証する
 - 記事本文のContent ProtectionとSecure External Link Contractをbuild/testの契約として扱う
-- サーバーランタイムを持たず、検証済みSHAだけをGitHub Pagesへ配信する
+- Hosting-neutralな静的artifactを生成し、現在は検証済みSHAをGitHub Pagesへ配信する
 
 ## Architecture
 
@@ -36,12 +36,15 @@ Markdown / Astro Content Collections
                 +--> Article-only Content Protection
                 |
                 v
-          GitHub Pages
+        Static artifact
+                |
+                v
+       Current: GitHub Pages
 ```
 
 ページ本体はビルド時に静的生成されます。Reactはテーマ切り替えやプロジェクト絞り込みなど、クライアント状態が必要なUIだけに使用します。
 
-設計の詳細は [ARCHITECTURE.md](./ARCHITECTURE.md)、外部リンク契約は [docs/external-links.md](./docs/external-links.md)、セキュリティ検証方針は [docs/security-testing.md](./docs/security-testing.md) を参照してください。
+設計の詳細は [ARCHITECTURE.md](./ARCHITECTURE.md)、deployment contractは [docs/deployment.md](./docs/deployment.md)、外部リンク契約は [docs/external-links.md](./docs/external-links.md)、セキュリティ検証方針は [docs/security-testing.md](./docs/security-testing.md) を参照してください。
 
 ## Tech stack
 
@@ -105,7 +108,8 @@ Windowsで`npm ci`が`EPERM`になる場合は、開発サーバーやNodeプロ
 | `npm run test:e2e`           | Run Playwright E2E tests                   |
 | `npm run test:security`      | Test browser-level security contracts      |
 | `npm run test:accessibility` | Run axe and keyboard accessibility checks  |
-| `npm run test:smoke`         | Smoke-test the deployed GitHub Pages site  |
+| `npm run test:smoke`         | Smoke-test the configured production URL   |
+| `npm run test:hosting`       | Verify root and subpath build artifacts    |
 | `npm run security:audit`     | Audit generated/source security invariants |
 | `npm run performance:budget` | Check generated asset-size budgets         |
 | `npm run audit`              | Run npm vulnerability audit                |
@@ -116,6 +120,10 @@ Windowsで`npm ci`が`EPERM`になる場合は、開発サーバーやNodeプロ
 ```bash
 npm run verify
 ```
+
+Production builds require explicit `SITE_URL` and `SITE_BASE` values. For local
+verification, set `SITE_URL=https://example.test` and `SITE_BASE=/`; deployment
+workflows provide the public production values. See [docs/deployment.md](./docs/deployment.md).
 
 ## CI design
 

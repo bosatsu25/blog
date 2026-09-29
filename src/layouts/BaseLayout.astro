@@ -1,6 +1,6 @@
 ---
 import Header from '../components/Header.astro';
-import { siteConfig, withBase } from '../config/site';
+import { siteConfig, withBase, withoutBase } from '../config/site';
 import '../styles/global.scss';
 
 interface Props {
@@ -10,8 +10,9 @@ interface Props {
 
 const { title = siteConfig.name, description = siteConfig.description } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const base = import.meta.env.BASE_URL;
+const routePath = withoutBase(Astro.url.pathname, base);
+const canonical = new URL(withBase(routePath, base), Astro.site?.origin ?? Astro.url.origin);
 ---
 
 <!doctype html>

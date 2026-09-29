@@ -25,6 +25,17 @@ describe('classifyLink', () => {
     });
   });
 
+  it.each([
+    ['https://example.pages.dev', 'https://example.pages.dev/about/'],
+    ['https://example.pages.dev/ikesama.dev', 'https://example.pages.dev/ikesama.dev/about/'],
+    [
+      'https://bosatsuking.github.io/ikesama.dev',
+      'https://bosatsuking.github.io/ikesama.dev/about/',
+    ],
+  ])('keeps current-site absolute URL internal for %s', (configuredSite, href) => {
+    expect(classifyLink(href, configuredSite)).toEqual({ type: 'internal' });
+  });
+
   it('keeps links on a configured HTTP development origin internal', () => {
     expect(classifyLink('/about/', 'http://localhost:4321/site/')).toEqual({
       type: 'internal',
@@ -126,6 +137,26 @@ describe('rehypeSecureExternalLinks', () => {
     expect(links.map((link) => link.properties)).toEqual([
       { href: '/about/' },
       { href: 'mailto:hello@example.com' },
+    ]);
+  });
+
+  it('applies the configured base to root-relative internal Markdown links', () => {
+    const links = ['/about/', '/ikesama.dev/about/'].map((href) => ({
+      type: 'element',
+      tagName: 'a',
+      properties: { href },
+      children: [{ type: 'text', value: 'About' }],
+    }));
+    const tree = { type: 'root', children: links };
+
+    rehypeSecureExternalLinks({
+      siteUrl: 'https://example.test/ikesama.dev/',
+      siteBase: '/ikesama.dev/',
+    })(tree);
+
+    expect(links.map((link) => link.properties)).toEqual([
+      { href: '/ikesama.dev/about/' },
+      { href: '/ikesama.dev/about/' },
     ]);
   });
 

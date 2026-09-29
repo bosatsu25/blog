@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
+    "build:astro": "astro build",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",
@@ -16,8 +17,9 @@
     "test:e2e": "playwright test",
     "test:accessibility": "playwright test --config=playwright.accessibility.config.ts",
     "test:smoke": "playwright test --config=playwright.production.config.ts",
+    "test:hosting": "node scripts/hosting-contract.mjs",
     "fix": "prettier --write .",
-    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run security:audit && npm run test:e2e && npm run test:security && npm run test:accessibility && npm run performance:budget && npm run audit",
+    "verify": "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run test:hosting && npm run security:audit && npm run test:e2e && npm run test:security && npm run test:accessibility && npm run performance:budget && npm run audit",
     "security:audit": "node scripts/security-audit.mjs",
     "test:security": "playwright test --config=playwright.security.config.ts",
     "performance:budget": "node scripts/performance-budget.mjs",

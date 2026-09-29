@@ -15,7 +15,7 @@ type HastNode = {
 };
 
 type HastTree = HastNode & { children: HastNode[] };
-type RehypeOptions = { siteUrl: string };
+type RehypeOptions = { siteUrl: string; siteBase?: string };
 
 function invalidLink(href: string, reason: string): Error {
   return new Error(`Invalid Markdown link "${href}": ${reason}`);
@@ -88,7 +88,7 @@ function createSpan(className: string, value: string, hidden = false): HastNode 
   };
 }
 
-export function rehypeSecureExternalLinks({ siteUrl }: RehypeOptions) {
+export function rehypeSecureExternalLinks({ siteUrl, siteBase = '/' }: RehypeOptions) {
   return (tree: HastTree): void => {
     const visit = (node: HastNode): void => {
       if (node.type === 'element' && node.tagName === 'a' && node.properties?.href !== undefined) {
@@ -98,6 +98,13 @@ export function rehypeSecureExternalLinks({ siteUrl }: RehypeOptions) {
         }
 
         const destination = classifyLink(href, siteUrl);
+        if (destination.type === 'internal' && href.startsWith('/') && siteBase !== '/') {
+          const basePath = siteBase.replace(/\/$/, '');
+          if (href !== basePath && !href.startsWith(`${basePath}/`)) {
+            node.properties.href = `${basePath}${href}`;
+          }
+        }
+
         if (destination.type === 'external') {
           const properties = node.properties;
           properties.target = '_blank';

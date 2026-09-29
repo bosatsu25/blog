@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PAGES_URL: https://bosatsuking.github.io/ikesama.dev
+      PRODUCTION_URL: https://bosatsuking.github.io/ikesama.dev
     steps:
       - name: Checkout deployed SHA
         uses: actions/checkout@v7

@@ -10,7 +10,11 @@ export async function GET({ site }: APIContext): Promise<Response> {
     (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
   );
 
-  const origin = (site ?? new URL('http://localhost:4321')).origin;
+  if (!site) {
+    throw new Error('Astro site URL must be configured to generate the RSS feed.');
+  }
+
+  const origin = site.origin;
   const base = import.meta.env.BASE_URL;
   const absoluteUrl = (path: string): string => buildAbsoluteUrl(base, origin, path);
 
