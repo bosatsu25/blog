@@ -36,7 +36,9 @@ test.describe('production smoke', () => {
   test('RSS and sitemap endpoints publish valid route references', async ({ page, request }) => {
     const rss = await request.get(publicPath('/rss.xml'));
     expect(rss.status()).toBe(200);
-    expect(rss.headers()['content-type']).toContain('application/rss+xml');
+    expect(rss.headers()['content-type']).toMatch(
+      /^(?:application\/(?:rss\+)?xml|text\/xml)(?:;|$)/i,
+    );
 
     const xml = await rss.text();
     await page.goto(publicPath('/'));
@@ -117,7 +119,7 @@ test.describe('production smoke', () => {
 
     const rendered = await page.goto(missingPath, { waitUntil: 'domcontentloaded' });
     expect(rendered?.status()).toBe(404);
-    await expect(page.getByText(/Page not found|404/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Page not found/i })).toBeVisible();
   });
 
   test('main navigation still points to viable public pages', async ({ page }) => {

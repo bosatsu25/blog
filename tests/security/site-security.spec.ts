@@ -178,9 +178,11 @@ test('CSP does not break the interactive theme island', async ({ page }) => {
   const expected = before === 'dark' ? 'light' : 'dark';
 
   await expect(button).toBeEnabled();
+  await expect(button).toHaveAttribute('title', 'Toggle dark mode');
   await button.click();
   await expect(html).toHaveAttribute('data-theme', expected);
   await expect(button).toHaveAttribute('aria-pressed', String(expected === 'dark'));
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expected);
 
   expect(errors).toEqual([]);
 });

@@ -94,7 +94,7 @@ The browser suite also checks no runtime CSP violation, no third-party requests,
 
 `npm run test:smoke` is the production verification step for a deployed GitHub Pages site. It checks the home, About, and article routes; CSS and JavaScript loading; CSP; RSS and sitemap XML; favicon content type; theme toggle; skip-link keyboard flow; navigation; and 404 behavior. Routes are prefixed from `PAGES_URL` so a project Pages deployment is checked under `/ikesama.dev/`, not the domain root. This is intentionally separate from the local preview security tests, because the GitHub Pages environment may differ from the local `astro preview` build.
 
-The performance budget checks raw built asset sizes, not a Lighthouse score. The current baseline is 223,480 bytes of JavaScript total (largest chunk: 212,922 bytes) and 5,274 bytes of CSS. The limits are 240 KiB total JavaScript, 230 KiB per JavaScript chunk, 12 KiB total CSS, and zero source-map bytes; the JavaScript limits provide approximately 10% growth headroom above the measured build.
+The performance budget checks raw built asset sizes, not a Lighthouse score. The current baseline is 223,835 bytes of JavaScript total (largest chunk: 212,922 bytes) and 5,491 bytes of CSS. The limits are 240 KiB total JavaScript, 230 KiB per JavaScript chunk, 12 KiB total CSS, and zero source-map bytes; the JavaScript limits provide approximately 10% growth headroom above the measured build.
 
 The Pages deploy workflow runs only after a successful `CI` workflow for a `push` to `main`, checks out that exact tested SHA, and runs this smoke suite after deployment. Pull Request CI runs cannot trigger a deployment.
 

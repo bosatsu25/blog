@@ -150,9 +150,22 @@ a:focus-visible {
   }
 }
 
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 16px;
+}
+
 .theme-toggle {
-  padding: 0;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  place-items: center;
+  color: var(--header);
   border: 0;
+  border-radius: 3px;
   background: transparent;
   font: inherit;
   cursor: pointer;
@@ -160,7 +173,10 @@ a:focus-visible {
   &:hover:not(:disabled),
   &:focus-visible {
     color: var(--text);
-    text-decoration: underline;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--code-bg);
   }
 
   &:disabled {
@@ -169,7 +185,9 @@ a:focus-visible {
   }
 
   .theme-toggle__icon {
-    display: none;
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -412,7 +430,7 @@ a:focus-visible {
   }
 
   .top {
-    align-items: flex-start;
+    align-items: center;
     margin-top: 24px;
     margin-bottom: 40px;
 
