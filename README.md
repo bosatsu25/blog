@@ -45,32 +45,32 @@ Markdown / Astro Content Collections
 
 ## Tech stack
 
-| Area | Technology |
-| --- | --- |
-| Framework | Astro 7 |
-| Language | TypeScript 5.9 |
-| Interactive UI | React 19 |
-| Styling | SCSS / CSS Custom Properties |
-| Content | Astro Content Collections / Markdown |
-| Markdown transform | @astrojs/markdown-remark |
-| Unit Test | Vitest |
-| E2E | Playwright |
-| Accessibility | axe / Playwright |
-| Static analysis | ESLint / Astro Check |
-| Formatting | Prettier |
-| CI/CD | GitHub Actions |
-| Hosting | GitHub Pages |
+| Area               | Technology                           |
+| ------------------ | ------------------------------------ |
+| Framework          | Astro 7                              |
+| Language           | TypeScript 5.9                       |
+| Interactive UI     | React 19                             |
+| Styling            | SCSS / CSS Custom Properties         |
+| Content            | Astro Content Collections / Markdown |
+| Markdown transform | @astrojs/markdown-remark             |
+| Unit Test          | Vitest                               |
+| E2E                | Playwright                           |
+| Accessibility      | axe / Playwright                     |
+| Static analysis    | ESLint / Astro Check                 |
+| Formatting         | Prettier                             |
+| CI/CD              | GitHub Actions                       |
+| Hosting            | GitHub Pages                         |
 
 ## Pages
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Home / Recent Writing |
-| `/about/` | Profile |
-| `/projects/` | Projects and category filtering |
-| `/writing/` | Articles |
-| `/writing/:id/` | Article detail |
-| `/404.html` | Not found |
+| Route           | Purpose                         |
+| --------------- | ------------------------------- |
+| `/`             | Home / Recent Writing           |
+| `/about/`       | Profile                         |
+| `/projects/`    | Projects and category filtering |
+| `/writing/`     | Articles                        |
+| `/writing/:id/` | Article detail                  |
+| `/404.html`     | Not found                       |
 
 ## Local development
 
@@ -92,24 +92,24 @@ Windowsで`npm ci`が`EPERM`になる場合は、開発サーバーやNodeプロ
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start local development server |
-| `npm run build` | Astro Check + production build |
-| `npm run preview` | Preview production build |
-| `npm run format` | Apply Prettier formatting |
-| `npm run format:check` | Verify formatting |
-| `npm run lint` | Run ESLint |
-| `npm run check` | Run Astro diagnostics |
-| `npm run test` | Run Vitest unit tests |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run test:security` | Test browser-level security contracts |
-| `npm run test:accessibility` | Run axe and keyboard accessibility checks |
-| `npm run test:smoke` | Smoke-test the deployed GitHub Pages site |
-| `npm run security:audit` | Audit generated/source security invariants |
-| `npm run performance:budget` | Check generated asset-size budgets |
-| `npm run audit` | Run npm vulnerability audit |
-| `npm run verify` | Run the complete local quality gate |
+| Command                      | Purpose                                    |
+| ---------------------------- | ------------------------------------------ |
+| `npm run dev`                | Start local development server             |
+| `npm run build`              | Astro Check + production build             |
+| `npm run preview`            | Preview production build                   |
+| `npm run format`             | Apply Prettier formatting                  |
+| `npm run format:check`       | Verify formatting                          |
+| `npm run lint`               | Run ESLint                                 |
+| `npm run check`              | Run Astro diagnostics                      |
+| `npm run test`               | Run Vitest unit tests                      |
+| `npm run test:e2e`           | Run Playwright E2E tests                   |
+| `npm run test:security`      | Test browser-level security contracts      |
+| `npm run test:accessibility` | Run axe and keyboard accessibility checks  |
+| `npm run test:smoke`         | Smoke-test the deployed GitHub Pages site  |
+| `npm run security:audit`     | Audit generated/source security invariants |
+| `npm run performance:budget` | Check generated asset-size budgets         |
+| `npm run audit`              | Run npm vulnerability audit                |
+| `npm run verify`             | Run the complete local quality gate        |
 
 変更をpushする前は原則として次を実行します。
 
