@@ -5,8 +5,6 @@
 
 Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** の個人ブログです。
 
-**Live:** https://bosatsuking.github.io/ikesama.dev/
-
 ## Design goals
 
 - 記事とプロジェクトを主役にしたミニマルな情報設計
