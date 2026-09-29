@@ -3,32 +3,37 @@
 [![CI](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml)
 
-コンテンツ中心のサイトにフルSPAを持ち込まず、**Astroで静的HTMLを生成し、状態を持つUIだけReactでhydrateする** static-first / islands architecture を採用しています。
+Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** の個人ブログです。
+
+**Live:** https://bosatsuking.github.io/ikesama.dev/
 
 ## Design goals
 
-- 記事とプロジェクトを主役にする、ミニマルな情報設計
+- 記事とプロジェクトを主役にしたミニマルな情報設計
 - JavaScriptを必要な場所だけに限定する
-- Markdownで記事を追加できる運用性
-- TypeScriptによる型安全性
-- CIでformat / lint / type check / unit test / buildを自動検証する
-- Playwrightで主要ユーザーフローをE2E検証する
-- サーバーランタイムを持たずGitHub Pagesへ静的配信する
+- Markdown + Astro Content Collectionsで記事を管理する
+- TypeScript / Astro Checkで型・構造を検証する
+- Unit / E2E / Security / Accessibility / PerformanceをCIで自動検証する
+- 記事本文のContent ProtectionとSecure External Link Contractをbuild/testの契約として扱う
+- サーバーランタイムを持たず、検証済みSHAだけをGitHub Pagesへ配信する
 
 ## Architecture
 
 ```text
 Markdown / Astro Content Collections
                 |
-                v
-        Astro components
+                +--> Secure External Link build-time transform
                 |
                 v
+        Astro static generation
+                |
         Static HTML + CSS
           |           |
           |           +--> React island: ThemeToggle
           |
           +--------------> React island: ProjectFilter
+                |
+                +--> Article-only Content Protection
                 |
                 v
           GitHub Pages
@@ -36,42 +41,43 @@ Markdown / Astro Content Collections
 
 ページ本体はビルド時に静的生成されます。Reactはテーマ切り替えやプロジェクト絞り込みなど、クライアント状態が必要なUIだけに使用します。
 
-より詳しい設計判断は [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
-Markdown記事の外部リンク契約については
-[docs/external-links.md](./docs/external-links.md) を参照してください。
+設計の詳細は [ARCHITECTURE.md](./ARCHITECTURE.md)、外部リンク契約は [docs/external-links.md](./docs/external-links.md)、セキュリティ検証方針は [docs/security-testing.md](./docs/security-testing.md) を参照してください。
 
 ## Tech stack
 
-| Area            | Technology                           |
-| --------------- | ------------------------------------ |
-| Framework       | Astro 7                              |
-| Language        | TypeScript                           |
-| Interactive UI  | React 19                             |
-| Styling         | SCSS / CSS Custom Properties         |
-| Content         | Astro Content Collections / Markdown |
-| Unit Test       | Vitest                               |
-| E2E             | Playwright                           |
-| Static analysis | ESLint / Astro Check                 |
-| Formatting      | Prettier                             |
-| CI/CD           | GitHub Actions                       |
-| Hosting         | GitHub Pages                         |
+| Area | Technology |
+| --- | --- |
+| Framework | Astro 7 |
+| Language | TypeScript 5.9 |
+| Interactive UI | React 19 |
+| Styling | SCSS / CSS Custom Properties |
+| Content | Astro Content Collections / Markdown |
+| Markdown transform | @astrojs/markdown-remark |
+| Unit Test | Vitest |
+| E2E | Playwright |
+| Accessibility | axe / Playwright |
+| Static analysis | ESLint / Astro Check |
+| Formatting | Prettier |
+| CI/CD | GitHub Actions |
+| Hosting | GitHub Pages |
 
 ## Pages
 
-| Route           | Purpose                         |
-| --------------- | ------------------------------- |
-| `/`             | Home / Recent Writing           |
-| `/about/`       | Profile                         |
-| `/projects/`    | Projects and category filtering |
-| `/writing/`     | Articles                        |
-| `/writing/:id/` | Article detail                  |
-| `/404.html`     | Not found                       |
+| Route | Purpose |
+| --- | --- |
+| `/` | Home / Recent Writing |
+| `/about/` | Profile |
+| `/projects/` | Projects and category filtering |
+| `/writing/` | Articles |
+| `/writing/:id/` | Article detail |
+| `/404.html` | Not found |
 
 ## Local development
 
 ### Requirements
 
 - Node.js `>=22.12.0`
+- CI baseline: Node.js `24.17.0`（`.node-version`）
 - npm
 
 ### Setup
@@ -82,58 +88,98 @@ npx playwright install
 npm run dev
 ```
 
-Astro dev serverが起動したら、ターミナルに表示されたローカルURLを開いて確認します。
+Windowsで`npm ci`が`EPERM`になる場合は、開発サーバーやNodeプロセスが`node_modules`内のnative bindingを掴んでいないか確認してください。
 
 ## Commands
 
-| Command                      | Purpose                                       |
-| ---------------------------- | --------------------------------------------- |
-| `npm run dev`                | Start local development server                |
-| `npm run build`              | Astro Check + production build                |
-| `npm run preview`            | Preview production build                      |
-| `npm run format`             | Apply Prettier formatting                     |
-| `npm run format:check`       | Verify formatting                             |
-| `npm run lint`               | Run ESLint                                    |
-| `npm run check`              | Run Astro diagnostics                         |
-| `npm run test`               | Run Vitest unit tests                         |
-| `npm run test:e2e`           | Run Playwright E2E tests                      |
-| `npm run test:security`      | Test the production build security contract   |
-| `npm run test:accessibility` | Run the axe and keyboard accessibility checks |
-| `npm run test:smoke`         | Smoke-test the deployed GitHub Pages site     |
-| `npm run performance:budget` | Check generated asset-size budgets            |
-| `npm run audit`              | Run the npm vulnerability audit               |
-| `npm run verify`             | Run the complete local quality gate           |
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start local development server |
+| `npm run build` | Astro Check + production build |
+| `npm run preview` | Preview production build |
+| `npm run format` | Apply Prettier formatting |
+| `npm run format:check` | Verify formatting |
+| `npm run lint` | Run ESLint |
+| `npm run check` | Run Astro diagnostics |
+| `npm run test` | Run Vitest unit tests |
+| `npm run test:e2e` | Run Playwright E2E tests |
+| `npm run test:security` | Test browser-level security contracts |
+| `npm run test:accessibility` | Run axe and keyboard accessibility checks |
+| `npm run test:smoke` | Smoke-test the deployed GitHub Pages site |
+| `npm run security:audit` | Audit generated/source security invariants |
+| `npm run performance:budget` | Check generated asset-size budgets |
+| `npm run audit` | Run npm vulnerability audit |
+| `npm run verify` | Run the complete local quality gate |
 
-変更をpushする前は、原則として次を実行します。
+変更をpushする前は原則として次を実行します。
 
 ```bash
 npm run verify
 ```
 
-## Quality gates
+## CI design
 
-`main`へのpushとPull RequestではGitHub Actionsが品質チェックを実行します。
+Pull Requestと`main`へのpushは同じCI contractを通ります。README-only変更も含め、すべてのPRで最終`CI gate`が生成されます。
 
 ```text
-format / lint / typecheck / unit
-                |
-     build + security audit
-                |
-    E2E / security / a11y
-                |
-      performance + npm audit
-                |
-      gated Pages deploy + smoke
+Pull Request / main push
+          |
+          v
+    Quality gate
+    - npm ci
+    - format
+    - lint
+    - unit
+    - Astro check + build
+    - static security audit
+    - performance budget
+    - npm audit
+          |
+          v
+    Browser gate
+    - Chromium / Firefox / WebKit E2E
+    - browser security tests
+    - accessibility
+          |
+          v
+       CI gate
+          |
+      all green
+          |
+          +--> PR: merge criterion
+          |
+          +--> main: Deploy workflow
+                        |
+                        v
+                  GitHub Pages
+                        |
+                        v
+                 Production smoke
 ```
 
-E2Eでは現在、デスクトップ / モバイル条件で以下を確認しています。
+`Browser gate`は`Quality gate`成功後にだけ実行されます。依存解決やformatなど前段で失敗した場合、同じ原因で複数jobが大量に赤くならないようにしています。
 
-- Primary navigation
-- Project category filtering
-- Theme switching
-- Article content protection in Chromium, Firefox, WebKit, and mobile WebKit
+古い同一PRのCIは`concurrency`でキャンセルし、最新commitの結果を優先します。
 
-記事本文では通常のブラウザUIによる選択・コピー・印刷等を抑止し、繰り返し表示するwatermarkで転載を抑止します。公開Web技術の性質上、DevTools、View Source、direct HTTP retrieval、OCR、OS screenshot、screen recording、external cameraを完全に防止するものではありません。
+GitHub側でbranch rulesetを設定する場合は、最終checkの **CI gate** をrequired status checkにする想定です。
+
+## Quality and security contracts
+
+E2EではChromium / Firefox / WebKitとmobile条件で主要UIを検証します。
+
+主な契約:
+
+- Primary navigation / Theme switching / Project filtering
+- Article Content Protection
+- Secure External Links
+- CSP / third-party request / generated artifact security
+- Accessibility
+- Performance budget
+- Production smoke
+
+記事本文では通常のブラウザUIによる選択・コピー・印刷等を強く抑止し、繰り返しwatermarkで転載を抑止します。ただしDevTools、View Source、direct HTTP retrieval、OCR、OS screenshot、screen recording、external cameraを完全に防止するものではありません。
+
+Markdown内の外部HTTPSリンクはbuild-timeで分類され、destination hostname表示、`target="_blank"`、`rel="noopener noreferrer external"`、`referrerpolicy="no-referrer"`を自動付与します。危険・未対応schemeや外部HTTPリンクはbuild時に拒否します。
 
 ## Writing
 
@@ -155,35 +201,39 @@ draft: false
 
 frontmatterはAstro Content Collectionsで検証されます。
 
-## Projects
+## Dependency updates
 
-プロジェクト情報は `src/data/projects.ts` で管理しています。
+DependabotはnpmとGitHub Actionsを週次確認します。
 
-現在のサイトでは、Minecraft MOD、開発者向けツール、Frontend / QA関連の個人開発を掲載する構成です。
+- patch / minor: PR作成対象
+- major: 自動PR対象外。互換性を確認して手動で更新
+
+メジャー更新を無理に`--force`や`--legacy-peer-deps`で通す運用はしません。
 
 ## Deployment
 
-`main`へのpushでCIが全Quality Gateを通過した後、`.github/workflows/deploy.yml` がそのCI対象SHAをGitHub Pagesへデプロイします。デプロイ完了後にはProduction Smokeを実行します。Pull RequestのCI成功や失敗したCIからはデプロイされません。
+`main`のCIが成功したときだけ、`.github/workflows/deploy.yml` がその検証済みSHAをGitHub Pagesへデプロイします。
 
-初回のみ、GitHubリポジトリで次の設定が必要です。
+Deploy workflowは`main`のCI完了だけを監視し、PR CIからは起動しません。デプロイ後はProduction Smokeを実行し、公開URLの主要route・asset・runtime contractをread-onlyで確認します。
 
-1. **Settings**
-2. **Pages**
-3. **Build and deployment**
-4. **Source: GitHub Actions**
+現在の公開先:
 
-この設定が未有効の場合、build artifactの生成には成功しても `actions/deploy-pages` がPages deploymentを作成できず失敗します。
-
-カスタムドメイン `ikesama.dev` を使用する場合は、GitHub Pages側のCustom domain設定、DNS設定、`SITE_URL`、必要に応じて `public/CNAME` を設定します。
+```text
+https://bosatsuking.github.io/ikesama.dev/
+```
 
 ## Repository structure
 
 ```text
 .
 ├─ .github/
+│  ├─ dependabot.yml
 │  └─ workflows/
 │     ├─ ci.yml
 │     └─ deploy.yml
+├─ docs/
+│  ├─ external-links.md
+│  └─ security-testing.md
 ├─ public/
 ├─ src/
 │  ├─ components/
@@ -195,16 +245,23 @@ frontmatterはAstro Content Collectionsで検証されます。
 │  ├─ pages/
 │  └─ styles/
 ├─ tests/
-│  └─ e2e/
+│  ├─ accessibility/
+│  ├─ e2e/
+│  ├─ production/
+│  └─ security/
+├─ .node-version
 ├─ ARCHITECTURE.md
+├─ SECURITY.md
 ├─ astro.config.mjs
+├─ package.json
 ├─ playwright.config.ts
-├─ vitest.config.ts
-└─ package.json
+└─ vitest.config.ts
 ```
 
 ## Engineering policy
 
 このサイト自体もポートフォリオの一部として扱います。
 
-機能を追加する際は、単に「使える技術を増やす」ことよりも、サイト要件に対してその技術が必要かを優先します。静的に解決できるものはAstroで静的に生成し、ブラウザ状態が必要な箇所だけをReact islandとして追加します。
+機能を追加するときは、使える技術を増やすことよりサイト要件への必要性を優先します。静的に解決できるものはbuild-timeで処理し、ブラウザ状態が必要な箇所だけをclient-sideへ持ち込みます。
+
+CIは「赤をなくす」ためではなく、壊れた変更を明確な理由で止めるために使います。非互換なdependency updateはCIを弱めず、依存側の互換性が整ってから更新します。
