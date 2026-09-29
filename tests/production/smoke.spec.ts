@@ -127,4 +127,25 @@ test.describe('production smoke', () => {
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', /\/about\//);
   });
+
+  test('article links expose secure external destinations without leaving production', async ({
+    page,
+  }) => {
+    await page.goto(publicPath('/writing/quality-gates-for-a-small-site/'), {
+      waitUntil: 'networkidle',
+    });
+
+    const articleBody = page.locator('.article-body');
+    await expect(articleBody).toHaveCSS('user-select', 'none');
+    const externalLink = articleBody.locator('a.external-link');
+    await expect(externalLink).toHaveAttribute('href', 'https://playwright.dev/');
+    await expect(externalLink).toHaveAttribute('target', '_blank');
+    await expect(externalLink).toHaveAttribute('rel', 'noopener noreferrer external');
+    await expect(externalLink).toHaveAttribute('referrerpolicy', 'no-referrer');
+    await expect(externalLink.locator('.external-link__hostname')).toHaveText('playwright.dev');
+
+    const internalLink = articleBody.getByRole('link', { name: 'static-firstの記事' });
+    await expect(internalLink).not.toHaveAttribute('target', '_blank');
+    await expect(internalLink.locator('.external-link__hostname')).toHaveCount(0);
+  });
 });
