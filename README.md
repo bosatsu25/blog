@@ -84,18 +84,23 @@ Astro dev serverが起動したら、ターミナルに表示されたローカ�
 
 ## Commands
 
-| Command                | Purpose                             |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Start local development server      |
-| `npm run build`        | Astro Check + production build      |
-| `npm run preview`      | Preview production build            |
-| `npm run format`       | Apply Prettier formatting           |
-| `npm run format:check` | Verify formatting                   |
-| `npm run lint`         | Run ESLint                          |
-| `npm run check`        | Run Astro diagnostics               |
-| `npm run test`         | Run Vitest unit tests               |
-| `npm run test:e2e`     | Run Playwright E2E tests            |
-| `npm run verify`       | Run the complete local quality gate |
+| Command                      | Purpose                                       |
+| ---------------------------- | --------------------------------------------- |
+| `npm run dev`                | Start local development server                |
+| `npm run build`              | Astro Check + production build                |
+| `npm run preview`            | Preview production build                      |
+| `npm run format`             | Apply Prettier formatting                     |
+| `npm run format:check`       | Verify formatting                             |
+| `npm run lint`               | Run ESLint                                    |
+| `npm run check`              | Run Astro diagnostics                         |
+| `npm run test`               | Run Vitest unit tests                         |
+| `npm run test:e2e`           | Run Playwright E2E tests                      |
+| `npm run test:security`      | Test the production build security contract   |
+| `npm run test:accessibility` | Run the axe and keyboard accessibility checks |
+| `npm run test:smoke`         | Smoke-test the deployed GitHub Pages site     |
+| `npm run performance:budget` | Check generated asset-size budgets            |
+| `npm run audit`              | Run the npm vulnerability audit               |
+| `npm run verify`             | Run the complete local quality gate           |
 
 変更をpushする前は、原則として次を実行します。
 
@@ -108,17 +113,15 @@ npm run verify
 `main`へのpushとPull RequestではGitHub Actionsが品質チェックを実行します。
 
 ```text
-Prettier
-   |
-ESLint
-   |
-Astro Check
-   |
-Vitest
-   |
-Astro Build
-   |
-Playwright E2E
+format / lint / typecheck / unit
+                |
+     build + security audit
+                |
+    E2E / security / a11y
+                |
+      performance + npm audit
+                |
+      gated Pages deploy + smoke
 ```
 
 E2Eでは現在、デスクトップ / モバイル条件で以下を確認しています。
@@ -155,7 +158,7 @@ frontmatterはAstro Content Collectionsで検証されます。
 
 ## Deployment
 
-`main`へのpushで `.github/workflows/deploy.yml` が実行され、Astroのproduction buildをGitHub Pagesへデプロイします。
+`main`へのpushでCIが全Quality Gateを通過した後、`.github/workflows/deploy.yml` がそのCI対象SHAをGitHub Pagesへデプロイします。デプロイ完了後にはProduction Smokeを実行します。Pull RequestのCI成功や失敗したCIからはデプロイされません。
 
 初回のみ、GitHubリポジトリで次の設定が必要です。
 

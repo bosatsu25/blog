@@ -1,15 +1,9 @@
 import type { APIContext } from 'astro';
 import { getCollection } from 'astro:content';
-import { siteConfig, withBase } from '../config/site';
+import { buildAbsoluteUrl, siteConfig } from '../config/site';
+import { escapeXml } from '../lib/xml';
 
-function escapeXml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;');
-}
+export { escapeXml } from '../lib/xml';
 
 export async function GET({ site }: APIContext): Promise<Response> {
   const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort(
@@ -18,7 +12,7 @@ export async function GET({ site }: APIContext): Promise<Response> {
 
   const origin = (site ?? new URL('http://localhost:4321')).origin;
   const base = import.meta.env.BASE_URL;
-  const absoluteUrl = (path: string): string => new URL(withBase(path, base), origin).href;
+  const absoluteUrl = (path: string): string => buildAbsoluteUrl(base, origin, path);
 
   const items = posts
     .map(

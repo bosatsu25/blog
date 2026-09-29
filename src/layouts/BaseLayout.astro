@@ -34,9 +34,12 @@ const base = import.meta.env.BASE_URL;
     <script is:inline src={withBase('/theme-init.js', base)}></script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">
+      Skip to content
+    </a>
     <div class="page-shell">
       <Header />
-      <main id="main-content" class="content">
+      <main id="main-content" class="content" tabindex="-1">
         <slot />
       </main>
     </div>

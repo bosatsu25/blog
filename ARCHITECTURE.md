@@ -39,10 +39,10 @@ The site is content-heavy and interaction-light. A full SPA would move routing a
 Pull requests are expected to pass:
 
 ```text
-Prettier
-  -> ESLint
-  -> astro check
-  -> Vitest
-  -> astro build
-  -> Playwright
+format/lint/typecheck/unit
+  -> build/static security audit
+  -> E2E/security/accessibility
+  -> performance budget/npm audit
 ```
+
+GitHub Pages deployment is triggered only by a successful CI run for a push to `main`. The deploy workflow checks out the exact tested commit, then runs a read-only production smoke suite after deployment.
