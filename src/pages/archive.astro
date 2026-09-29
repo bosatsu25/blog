@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import PostList from '../components/PostList.astro';
+import { buildArchive } from '../lib/archive';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const posts = await getCollection('writing', ({ data }) => !data.draft);
+const categories = buildArchive(posts);
+---
+
+<BaseLayout title="Archive — 仏の道" description="カテゴリー・年月から記事を探せるアーカイブ。">
+  <header class="page-heading">
+    <p class="eyebrow">Archive</p>
+    <h1>記事一覧</h1>
+  </header>
+  {categories.map((category) => (
+    <section class="archive-category" aria-labelledby={`category-${category.name}`}>
+      <h2 id={`category-${category.name}`}>{category.name}</h2>
+      {category.years.map((year) => (
+        <section class="archive-year" aria-labelledby={`year-${category.name}-${year.year}`}>
+          <h3 id={`year-${category.name}-${year.year}`}>{year.year}</h3>
+          {year.months.map((month) => (
+            <section
+              class="archive-month"
+              aria-labelledby={`month-${category.name}-${month.year}-${month.month}`}
+            >
+              <h4 id={`month-${category.name}-${month.year}-${month.month}`}>{month.month}月</h4>
+              <PostList posts={month.posts} />
+            </section>
+          ))}
+        </section>
+      ))}
+    </section>
+  ))}
+</BaseLayout>

@@ -2,7 +2,7 @@
 title: 'Quality gates for a small site'
 description: '小さな個人サイトでも自動化する品質ゲート。'
 publishedAt: 2026-09-27
-tags: ['QA', 'CI', 'Playwright']
+category: 技術
 draft: false
 ---
 

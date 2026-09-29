@@ -6,18 +6,18 @@ interface Props {
   title: string;
   description: string;
   publishedAt: Date;
-  tags?: string[];
+  category: string;
 }
 
-const { title, description, publishedAt, tags = [] } = Astro.props;
+const { title, description, publishedAt, category } = Astro.props;
 ---
 
-<BaseLayout title={`${title} — Ikesama`} description={description}>
+<BaseLayout title={`${title} — 仏の道`} description={description} ogType="article">
   <article class="article">
     <header class="article-header">
       <h1>{title}</h1>
       <time datetime={publishedAt.toISOString()}>{formatBlogDate(publishedAt, 'full')}</time>
-      {tags.length > 0 && <p class="tags">{tags.join(' · ')}</p>}
+      <p class="article-category">{category}</p>
     </header>
     <div class="article-body">
       <slot />

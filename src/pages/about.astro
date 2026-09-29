@@ -5,13 +5,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="About — Ikesama" description="About Ikesama, a QA Engineer / Software Engineer.">
+<BaseLayout title="About — 仏の道" description="仏の道について、書き手について。">
   <article class="article prose-page">
     <header class="article-header">
       <h1>About</h1>
     </header>
 
-    <div class="article-body">
+    <div class="prose-page__body">
       <p>I'm Ikesama, a QA Engineer / Software Engineer.</p>
 
       <p>
@@ -38,8 +38,8 @@ const base = import.meta.env.BASE_URL;
         <a href="https://github.com/bosatsuKing" rel="me noopener noreferrer">
           GitHub
         </a>
-        , or read my
-        <a href={withBase('/', base)}>Blog</a>.
+        , or return to
+        <a href={withBase('/', base)}>仏の道</a>.
       </p>
     </div>
   </article>

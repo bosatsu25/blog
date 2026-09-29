@@ -6,13 +6,19 @@ import '../styles/global.scss';
 interface Props {
   title?: string;
   description?: string;
+  ogType?: 'website' | 'article';
 }
 
-const { title = siteConfig.name, description = siteConfig.description } = Astro.props;
+const {
+  title = siteConfig.name,
+  description = siteConfig.description,
+  ogType = 'website',
+} = Astro.props;
 
 const base = import.meta.env.BASE_URL;
 const routePath = withoutBase(Astro.url.pathname, base);
 const canonical = new URL(withBase(routePath, base), Astro.site?.origin ?? Astro.url.origin);
+const socialImage = new URL(withBase('/lotus-512.png', base), canonical.origin);
 ---
 
 <!doctype html>
@@ -23,6 +29,18 @@ const canonical = new URL(withBase(routePath, base), Astro.site?.origin ?? Astro
     <meta name="description" content={description} />
     <meta name="referrer" content="no-referrer" />
     <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:alt" content="淡いピンクの蓮の花" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
     <link
       rel="alternate"
       type="application/rss+xml"
@@ -31,6 +49,7 @@ const canonical = new URL(withBase(routePath, base), Astro.site?.origin ?? Astro
     />
     <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg', base)} />
     <link rel="icon" type="image/png" sizes="32x32" href={withBase('/favicon-32x32.png', base)} />
+    <link rel="apple-touch-icon" sizes="180x180" href={withBase('/apple-touch-icon.png', base)} />
     <title>{title}</title>
     <script is:inline src={withBase('/theme-init.js', base)}></script>
   </head>

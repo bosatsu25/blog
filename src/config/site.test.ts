@@ -4,9 +4,20 @@ import {
   normalizeBase,
   resolveDeploymentConfig,
   resolveProductionUrl,
+  siteConfig,
   withBase,
   withoutBase,
 } from './site';
+
+describe('siteConfig', () => {
+  it('uses the blog identity and Archive/About navigation', () => {
+    expect(siteConfig.name).toBe('仏の道');
+    expect(siteConfig.navigation).toEqual([
+      { label: 'Archive', path: '/archive/' },
+      { label: 'About', path: '/about/' },
+    ]);
+  });
+});
 
 describe('withBase', () => {
   it('keeps root-relative paths unchanged for the root base', () => {

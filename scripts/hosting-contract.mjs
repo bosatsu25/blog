@@ -1,4 +1,5 @@
 import process from 'node:process';
+import { existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -54,15 +55,19 @@ async function assertArtifact(base, siteUrl) {
 
   const routes = new Map([
     ['index.html', '/'],
+    ['archive/index.html', '/archive/'],
     ['about/index.html', '/about/'],
     ['writing/index.html', '/writing/'],
     [
       'writing/quality-gates-for-a-small-site/index.html',
       '/writing/quality-gates-for-a-small-site/',
     ],
-    ['projects/index.html', '/projects/'],
     ['404.html', '/404/'],
   ]);
+
+  if (htmlPages.has('projects/index.html')) {
+    fail('Projects route must not be included in the blog artifact.');
+  }
 
   for (const [file, route] of routes) {
     const html = htmlPages.get(file);
@@ -77,6 +82,7 @@ async function assertArtifact(base, siteUrl) {
   let sawThemeScript = false;
   let sawStylesheet = false;
   let sawFavicon = false;
+  let sawLotusBrandImage = false;
   for (const [file, html] of htmlPages) {
     for (const [, reference] of html.matchAll(/\b(?:href|src)="([^"]+)"/gi)) {
       if (reference.startsWith('/')) {
@@ -91,9 +97,13 @@ async function assertArtifact(base, siteUrl) {
     if (/src=["'][^"']*theme-init\.js/i.test(html)) sawThemeScript = true;
     if (/rel=["']stylesheet["'][^>]*href=/i.test(html)) sawStylesheet = true;
     if (/rel=["']icon["'][^>]*href=/i.test(html)) sawFavicon = true;
+    if (/lotus-512\.png/.test(html)) sawLotusBrandImage = true;
   }
-  if (!sawThemeScript || !sawStylesheet || !sawFavicon) {
-    fail('generated pages must include theme, stylesheet, and favicon resources.');
+  for (const asset of ['lotus-512.png', 'favicon-32x32.png', 'apple-touch-icon.png']) {
+    if (!existsSync(join(dist, asset))) fail(`expected branding asset ${asset} is missing.`);
+  }
+  if (!sawThemeScript || !sawStylesheet || !sawFavicon || !sawLotusBrandImage) {
+    fail('generated pages must include theme, stylesheet, favicon, and lotus brand resources.');
   }
 
   const rss = await readFile(join(dist, 'rss.xml'), 'utf8');
