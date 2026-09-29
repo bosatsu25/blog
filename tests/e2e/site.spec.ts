@@ -119,3 +119,47 @@ test('RSS feed contains valid XML and links to published writing', async ({ page
   const itemPaths = parsedFeed.itemLinks.flatMap((link) => (link ? [new URL(link).pathname] : []));
   expect(itemPaths).toContain('/writing/quality-gates-for-a-small-site/');
 });
+
+test('article links expose safe external destinations and preserve internal navigation', async ({
+  page,
+}) => {
+  let externalReferrer: string | undefined;
+  await page.context().route('https://playwright.dev/**', async (route) => {
+    externalReferrer = (await route.request().allHeaders()).referer;
+    await route.fulfill({
+      contentType: 'text/html',
+      body: '<title>Mocked documentation</title>',
+    });
+  });
+  await page.goto('/writing/quality-gates-for-a-small-site/');
+
+  const articleBody = page.locator('.article-body');
+  const externalLink = articleBody.locator('a.external-link');
+  await expect(externalLink).toHaveAttribute('href', 'https://playwright.dev/');
+  await expect(externalLink).toHaveAttribute('target', '_blank');
+  await expect(externalLink).toHaveAttribute('rel', 'noopener noreferrer external');
+  await expect(externalLink).toHaveAttribute('referrerpolicy', 'no-referrer');
+  await expect(externalLink.locator('.external-link__indicator')).toHaveText(' ↗');
+  await expect(externalLink.locator('.external-link__hostname')).toHaveText('playwright.dev');
+  await expect(externalLink).toHaveAccessibleName(
+    /Playwright.*external link to playwright\.dev; opens in a new tab\./i,
+  );
+  await externalLink.focus();
+  await expect(externalLink).toBeFocused();
+
+  const popupPromise = page.waitForEvent('popup');
+  await page.keyboard.press('Enter');
+  const popup = await popupPromise;
+  await expect(popup).toHaveTitle('Mocked documentation');
+  expect(externalReferrer).toBeUndefined();
+
+  const internalLink = articleBody.getByRole('link', { name: 'static-firstの記事' });
+  await expect(internalLink).toHaveAttribute('href', '/writing/why-this-site-is-static-first/');
+  await expect(internalLink).not.toHaveAttribute('target', '_blank');
+  await expect(internalLink).not.toHaveClass(/external-link/);
+  await expect(internalLink.locator('.external-link__hostname')).toHaveCount(0);
+  await internalLink.focus();
+  await expect(internalLink).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/writing\/why-this-site-is-static-first\/$/);
+});

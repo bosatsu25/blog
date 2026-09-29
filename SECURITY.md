@@ -38,6 +38,7 @@ The public site must maintain the following contract:
 - No project source files, environment files, package metadata, `.git` content, or source maps are published.
 - No raw HTML injection sinks are added without an explicit architecture change and test update.
 - Referrer policy is set to `no-referrer` for public pages.
+- External HTTPS links in Markdown use `target="_blank"`, `rel="noopener noreferrer external"`, and `referrerpolicy="no-referrer"`; unsupported and insecure schemes fail the build.
 
 ## Reporting a vulnerability
 

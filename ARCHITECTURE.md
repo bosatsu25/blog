@@ -12,6 +12,8 @@ Build a content-first personal engineering site that remains fast and understand
 4. **Automated quality gates** — formatting, linting, type checking, unit tests, build, and E2E are CI responsibilities.
 5. **GitHub Pages compatible** — no server runtime is required.
 6. **Article content protection is scoped** — browser interaction deterrents apply only to article bodies and do not alter the shared site shell.
+7. **External links are secured at build time** — Markdown links are classified and decorated
+   from their actual destination URL.
 
 ## Runtime boundary
 
@@ -33,6 +35,10 @@ Browser                                    |
 ```
 
 Article pages add local interaction deterrents for selection, copying, cutting, context menus, dragging, and print output, plus a repeated visual watermark. These controls apply only to `.article-body`; they do not make publicly served content confidential or prevent retrieval through developer tools, source inspection, direct HTTP requests, OCR, screenshots, recordings, or external cameras.
+
+Markdown article links pass through a build-time rehype transformation that validates URL
+schemes and adds the external-link contract without client-side JavaScript. See
+[docs/external-links.md](./docs/external-links.md).
 
 ## Why not a full React SPA?
 

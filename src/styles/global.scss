@@ -285,6 +285,29 @@ a:focus-visible {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Ctext x='12' y='90' transform='rotate(-22 12 90)' fill='%23888888' fill-opacity='.13' font-family='sans-serif' font-size='16'%3EIkesama%20%C2%B7%20ikesama.dev%3C/text%3E%3C/svg%3E");
   background-repeat: repeat;
 
+  .external-link__hostname {
+    display: inline-block;
+    margin-left: 0.4em;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.68em;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    vertical-align: baseline;
+  }
+
+  .external-link__description {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
   h2 {
     font-size: 1.3em;
   }

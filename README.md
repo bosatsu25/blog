@@ -37,6 +37,8 @@ Markdown / Astro Content Collections
 ページ本体はビルド時に静的生成されます。Reactはテーマ切り替えやプロジェクト絞り込みなど、クライアント状態が必要なUIだけに使用します。
 
 より詳しい設計判断は [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
+Markdown記事の外部リンク契約については
+[docs/external-links.md](./docs/external-links.md) を参照してください。
 
 ## Tech stack
 
