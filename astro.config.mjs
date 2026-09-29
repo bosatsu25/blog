@@ -3,18 +3,20 @@ import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
+import { resolveDeploymentConfig } from './src/config/site.ts';
 import { rehypeSecureExternalLinks } from './src/lib/secure-external-links.ts';
 
-const [owner = 'owner'] = (process.env.GITHUB_REPOSITORY ?? 'owner/owner.github.io').split('/');
-const siteUrl = process.env.SITE_URL ?? `https://${owner}.github.io`;
+const deployment = resolveDeploymentConfig(process.env, process.argv.includes('build'));
 
 export default defineConfig({
-  site: siteUrl,
-  base: process.env.SITE_BASE ?? '/',
+  site: deployment.siteUrl,
+  base: deployment.base,
   integrations: [react(), sitemap()],
   markdown: {
     processor: unified({
-      rehypePlugins: [[rehypeSecureExternalLinks, { siteUrl }]],
+      rehypePlugins: [
+        [rehypeSecureExternalLinks, { siteUrl: deployment.siteUrl, siteBase: deployment.base }],
+      ],
     }),
     syntaxHighlight: 'prism',
   },

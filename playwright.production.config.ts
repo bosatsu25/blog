@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import process from 'node:process';
+import { resolveProductionUrl } from './src/config/site';
 
-const productionURL = process.env.PAGES_URL ?? 'https://bosatsuking.github.io/ikesama.dev';
+const productionURL = resolveProductionUrl(process.env.PRODUCTION_URL).href;
 
 export default defineConfig({
   testDir: './tests/production',

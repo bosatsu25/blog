@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { withBase } from '../../src/config/site';
+import { normalizeBase, resolveProductionUrl, withBase } from '../../src/config/site';
 
-const pagesURL = process.env.PAGES_URL ?? 'https://bosatsuking.github.io/ikesama.dev';
-const siteBase = new URL(pagesURL).pathname.replace(/\/?$/, '/');
+const productionURL = resolveProductionUrl(process.env.PRODUCTION_URL);
+const siteBase = normalizeBase(productionURL.pathname);
 const publicPath = (path: string): string => withBase(path, siteBase);
 const htmlPages = ['/', '/about/', '/writing/quality-gates-for-a-small-site/'];
 
@@ -20,6 +20,11 @@ test.describe('production smoke', () => {
       const response = await page.goto(publicPath(path), { waitUntil: 'networkidle' });
       expect(response, `${path} should return a response`).not.toBeNull();
       expect(response?.status(), `${path} should not be an error page`).toBeLessThan(400);
+      const canonicalPath = path === '/' ? siteBase : withBase(path, siteBase);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        new URL(canonicalPath, productionURL.origin).href,
+      );
 
       const cspMeta = page.locator('meta[http-equiv="content-security-policy"]');
       await expect(cspMeta).toHaveCount(1);
