@@ -11,7 +11,7 @@
     "check": "astro check",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write README.md scripts/hosting-contract.mjs && git diff -- README.md scripts/hosting-contract.mjs && exit 1",
     "format:content": "prettier --check \"src/content/writing/**/*.md\"",
     "test": "vitest run",
     "test:watch": "vitest",
