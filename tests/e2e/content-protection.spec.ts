@@ -1,9 +1,17 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-const articleRoute = '/writing/quality-gates-for-a-small-site/';
+async function openPublishedArticle(page: Page): Promise<void> {
+  await page.goto('/archive/');
+  const firstArticle = page.locator('.post-link').first();
+  await expect(firstArticle).toBeVisible();
+
+  const href = await firstArticle.getAttribute('href');
+  if (!href) throw new Error('Archive does not contain a published article link.');
+  await page.goto(href);
+}
 
 test('article protection stays within the article body', async ({ page }) => {
-  await page.goto(articleRoute);
+  await openPublishedArticle(page);
 
   const articleBody = page.locator('.article-body');
   await expect(articleBody).toBeVisible();
@@ -104,10 +112,10 @@ test('content protection does not apply to the About page', async ({ page }) => 
 });
 
 test('article body is omitted from print and PDF output', async ({ page }) => {
-  await page.goto(articleRoute);
+  await openPublishedArticle(page);
   await page.emulateMedia({ media: 'print' });
 
   await expect(page.locator('.article-body')).toBeHidden();
-  await expect(page.getByRole('heading', { name: 'Quality gates for a small site' })).toBeVisible();
+  await expect(page.locator('.article-header h1')).toBeVisible();
   await expect(page.getByRole('banner')).toBeVisible();
 });
