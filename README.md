@@ -1,9 +1,7 @@
-# 仏の道
-
 [![CI](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml/badge.svg)](https://github.com/bosatsuKing/ikesama.dev/actions/workflows/deploy.yml)
 
-仏教、日々、技術についての学びや気づきを綴る個人ブログです。Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** を採用しています。
+Astroで静的HTMLを生成し、状態が必要なUIだけReact islandとしてhydrateする **static-first / islands architecture** を採用しています。
 
 ## Design goals
 
