@@ -2,7 +2,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
+import process, { stdin as input, stdout as output } from 'node:process';
 import { readFrontmatterString, setDraftState } from './post-utils.mjs';
 
 const root = process.cwd();
@@ -101,8 +101,11 @@ const published = setDraftState(draft.content, false);
 await writeFile(draft.file, published, 'utf8');
 
 try {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  run(npmCommand, ['run', 'verify:content'], {
+  const npmExecPath = process.env.npm_execpath;
+  if (!npmExecPath) {
+    throw new Error('Run this command through npm: npm run post:publish');
+  }
+  run(process.execPath, [npmExecPath, 'run', 'verify:content'], {
     env: {
       ...process.env,
       SITE_URL: process.env.SITE_URL ?? 'https://example.test',
