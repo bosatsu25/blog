@@ -1,4 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function firstPublishedArticleHref(page: Page): Promise<string> {
+  await page.goto('/archive/');
+  const firstArticle = page.locator('.post-link').first();
+  await expect(firstArticle).toBeVisible();
+
+  const href = await firstArticle.getAttribute('href');
+  expect(href).toBeTruthy();
+  expect(href).toMatch(/\/writing\/.+\/$/);
+  return href ?? '/';
+}
 
 test('home page exposes the blog identity and primary navigation', async ({ page }) => {
   await page.goto('/');
@@ -43,7 +54,7 @@ test('about page presents the public profile without detailed personal informati
 
   await expect(page.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute(
     'href',
-    'https://github.com/bosatsuKing',
+    'https://github.com/bosatsu25',
   );
   await expect(page.getByRole('link', { name: '仏の道', exact: true })).toHaveAttribute(
     'href',
@@ -51,19 +62,19 @@ test('about page presents the public profile without detailed personal informati
   );
 });
 
-test('archive groups articles by category, year, and month', async ({ page }) => {
+test('archive exposes categorized dated writing without depending on a fixed article', async ({
+  page,
+}) => {
   await page.goto('/archive/');
 
   await expect(page.getByRole('heading', { name: '記事一覧', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '技術', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '2026', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '9月', exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Why this site is static-first', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Quality gates for a small site', exact: true }),
-  ).toBeVisible();
+  await expect(page.locator('.archive-category').first()).toBeVisible();
+  await expect(page.locator('.archive-year').first()).toBeVisible();
+  await expect(page.locator('.archive-month').first()).toBeVisible();
+
+  const firstArticle = page.locator('.post-link').first();
+  await expect(firstArticle).toBeVisible();
+  await expect(firstArticle).toHaveAttribute('href', /\/writing\/.+\/$/);
 });
 
 test('/writing/ remains a compatible link to the Archive', async ({ page }) => {
@@ -123,7 +134,7 @@ test('theme toggle changes the document theme', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expected);
 });
 
-test('RSS feed contains valid XML and links to published writing', async ({ page }) => {
+test('RSS feed contains valid XML and at least one published article', async ({ page }) => {
   await page.goto('/');
   const response = await page.request.get('/rss.xml');
   expect(response.ok()).toBe(true);
@@ -140,49 +151,16 @@ test('RSS feed contains valid XML and links to published writing', async ({ page
 
   expect(parsedFeed.hasParseError).toBe(false);
   const itemPaths = parsedFeed.itemLinks.flatMap((link) => (link ? [new URL(link).pathname] : []));
-  expect(itemPaths).toContain('/writing/quality-gates-for-a-small-site/');
+  expect(itemPaths.some((path) => /\/writing\/.+\/$/.test(path))).toBe(true);
 });
 
-test('article links expose safe external destinations and preserve internal navigation', async ({
-  page,
-}) => {
-  let externalReferrer: string | undefined;
-  await page.context().route('https://playwright.dev/**', async (route) => {
-    externalReferrer = (await route.request().allHeaders()).referer;
-    await route.fulfill({
-      contentType: 'text/html',
-      body: '<title>Mocked documentation</title>',
-    });
-  });
-  await page.goto('/writing/quality-gates-for-a-small-site/');
+test('a published article discovered from the archive renders normally', async ({ page }) => {
+  const href = await firstPublishedArticleHref(page);
+  const response = await page.goto(href);
 
-  const articleBody = page.locator('.article-body');
-  const externalLink = articleBody.locator('a.external-link');
-  await expect(externalLink).toHaveAttribute('href', 'https://playwright.dev/');
-  await expect(externalLink).toHaveAttribute('target', '_blank');
-  await expect(externalLink).toHaveAttribute('rel', 'noopener noreferrer external');
-  await expect(externalLink).toHaveAttribute('referrerpolicy', 'no-referrer');
-  await expect(externalLink.locator('.external-link__indicator')).toHaveText(' ↗');
-  await expect(externalLink.locator('.external-link__hostname')).toHaveText('playwright.dev');
-  await expect(externalLink).toHaveAccessibleName(
-    /Playwright.*external link to playwright\.dev; opens in a new tab\./i,
-  );
-  await externalLink.focus();
-  await expect(externalLink).toBeFocused();
-
-  const popupPromise = page.waitForEvent('popup');
-  await page.keyboard.press('Enter');
-  const popup = await popupPromise;
-  await expect(popup).toHaveTitle('Mocked documentation');
-  expect(externalReferrer).toBeUndefined();
-
-  const internalLink = articleBody.getByRole('link', { name: 'static-firstの記事' });
-  await expect(internalLink).toHaveAttribute('href', '/writing/why-this-site-is-static-first/');
-  await expect(internalLink).not.toHaveAttribute('target', '_blank');
-  await expect(internalLink).not.toHaveClass(/external-link/);
-  await expect(internalLink.locator('.external-link__hostname')).toHaveCount(0);
-  await internalLink.focus();
-  await expect(internalLink).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/writing\/why-this-site-is-static-first\/$/);
+  expect(response).not.toBeNull();
+  expect(response?.status()).toBeLessThan(400);
+  await expect(page.locator('.article-header h1')).toBeVisible();
+  await expect(page.locator('.article-body')).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/writing\/.+\/$/);
 });

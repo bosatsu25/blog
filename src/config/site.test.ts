@@ -40,11 +40,13 @@ describe('withBase', () => {
 });
 
 describe('withoutBase', () => {
-  it('removes a configured base path once and leaves root paths unchanged', () => {
-    expect(withoutBase('/ikesama.dev/', '/ikesama.dev/')).toBe('/');
-    expect(withoutBase('/ikesama.dev/about/', '/ikesama.dev')).toBe('/about/');
+  it('removes a configured base path once and leaves similarly named paths unchanged', () => {
+    expect(withoutBase('/project-site/', '/project-site/')).toBe('/');
+    expect(withoutBase('/project-site/about/', '/project-site')).toBe('/about/');
     expect(withoutBase('/about/', '/')).toBe('/about/');
-    expect(withoutBase('/ikesama.devil/about/', '/ikesama.dev')).toBe('/ikesama.devil/about/');
+    expect(withoutBase('/project-site-extra/about/', '/project-site')).toBe(
+      '/project-site-extra/about/',
+    );
   });
 });
 
@@ -78,9 +80,9 @@ describe('resolveDeploymentConfig', () => {
   it.each([
     [{ SITE_URL: 'https://example.test', SITE_BASE: '/' }, 'https://example.test/', '/'],
     [
-      { SITE_URL: 'https://example.test/ikesama.dev', SITE_BASE: '/ikesama.dev' },
-      'https://example.test/ikesama.dev/',
-      '/ikesama.dev/',
+      { SITE_URL: 'https://example.test/project-site', SITE_BASE: '/project-site' },
+      'https://example.test/project-site/',
+      '/project-site/',
     ],
   ])('resolves valid deployment shape %#', (environment, siteUrl, base) => {
     expect(resolveDeploymentConfig(environment)).toEqual({ siteUrl, base });

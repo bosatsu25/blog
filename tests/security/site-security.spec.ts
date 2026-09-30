@@ -49,6 +49,16 @@ async function getPublicHtmlPages(): Promise<PublicHtmlPage[]> {
     .sort((left, right) => left.artifact.localeCompare(right.artifact));
 }
 
+async function getPublishedArticlePages(): Promise<PublicHtmlPage[]> {
+  const pages = (await getPublicHtmlPages()).filter(
+    ({ artifact }) => artifact.startsWith('writing/') && artifact !== 'writing/index.html',
+  );
+  if (pages.length === 0) {
+    throw new Error('At least one generated published article is required for security tests.');
+  }
+  return pages;
+}
+
 test('every production HTML page enforces restrictive CSP and referrer policy', async ({
   page,
 }) => {
@@ -217,60 +227,59 @@ test('production pages keep attack surface and external links safe', async ({ pa
 test('Markdown article links have safe schemes and match their visible destinations', async ({
   page,
 }) => {
-  for (const route of [
-    '/writing/quality-gates-for-a-small-site/',
-    '/writing/why-this-site-is-static-first/',
-  ]) {
-    await page.goto(withBase(route, siteBase));
+  for (const { artifact, route } of await getPublishedArticlePages()) {
+    await test.step(`${artifact} at ${route}`, async () => {
+      await page.goto(route);
 
-    const links = await page.locator('.article-body a').evaluateAll((anchors) =>
-      anchors
-        .filter((anchor): anchor is HTMLAnchorElement => anchor instanceof HTMLAnchorElement)
-        .map((anchor) => {
-          const href = anchor.getAttribute('href');
-          const destination = href ? new URL(href, location.href) : null;
-          const hostname = anchor.querySelector('.external-link__hostname');
-          const indicator = anchor.querySelector('.external-link__indicator');
-          const description = anchor.querySelector('.external-link__description');
-          return {
-            href,
-            protocol: destination?.protocol,
-            isExternal: destination !== null && destination.origin !== location.origin,
-            target: anchor.getAttribute('target'),
-            rel: anchor.rel.split(/\s+/).filter(Boolean),
-            referrerPolicy: anchor.getAttribute('referrerpolicy'),
-            externalClass: anchor.classList.contains('external-link'),
-            visibleHost: hostname?.textContent ?? null,
-            indicator: indicator?.textContent ?? null,
-            description: description?.textContent ?? null,
-          };
-        }),
-    );
+      const links = await page.locator('.article-body a').evaluateAll((anchors) =>
+        anchors
+          .filter((anchor): anchor is HTMLAnchorElement => anchor instanceof HTMLAnchorElement)
+          .map((anchor) => {
+            const href = anchor.getAttribute('href');
+            const destination = href ? new URL(href, location.href) : null;
+            const hostname = anchor.querySelector('.external-link__hostname');
+            const indicator = anchor.querySelector('.external-link__indicator');
+            const description = anchor.querySelector('.external-link__description');
+            return {
+              href,
+              protocol: destination?.protocol,
+              isExternal: destination !== null && destination.origin !== location.origin,
+              target: anchor.getAttribute('target'),
+              rel: anchor.rel.split(/\s+/).filter(Boolean),
+              referrerPolicy: anchor.getAttribute('referrerpolicy'),
+              externalClass: anchor.classList.contains('external-link'),
+              visibleHost: hostname?.textContent ?? null,
+              indicator: indicator?.textContent ?? null,
+              description: description?.textContent ?? null,
+            };
+          }),
+      );
 
-    for (const link of links) {
-      expect(link.href).toBeTruthy();
-      expect(link.protocol).toBeTruthy();
-      expect(link.protocol).not.toMatch(/^(?:javascript|data|vbscript|file):$/i);
-      if (link.isExternal) {
-        const destination = new URL(link.href ?? '');
-        expect(link.href).toMatch(/^https:\/\//);
-        expect(link.target).toBe('_blank');
-        expect(link.rel).toEqual(expect.arrayContaining(['noopener', 'noreferrer', 'external']));
-        expect(link.referrerPolicy).toBe('no-referrer');
-        expect(link.externalClass).toBe(true);
-        expect(link.visibleHost).toBe(destination.host);
-        expect(link.indicator).toContain('↗');
-        expect(link.description).toContain(destination.host);
-        expect(link.description).toContain('opens in a new tab');
-      } else {
-        expect(link.target).toBeNull();
-        expect(link.rel).not.toContain('external');
-        expect(link.externalClass).toBe(false);
-        expect(link.visibleHost).toBeNull();
-        expect(link.indicator).toBeNull();
-        expect(link.description).toBeNull();
+      for (const link of links) {
+        expect(link.href).toBeTruthy();
+        expect(link.protocol).toBeTruthy();
+        expect(link.protocol).not.toMatch(/^(?:javascript|data|vbscript|file):$/i);
+        if (link.isExternal) {
+          const destination = new URL(link.href ?? '');
+          expect(link.href).toMatch(/^https:\/\//);
+          expect(link.target).toBe('_blank');
+          expect(link.rel).toEqual(expect.arrayContaining(['noopener', 'noreferrer', 'external']));
+          expect(link.referrerPolicy).toBe('no-referrer');
+          expect(link.externalClass).toBe(true);
+          expect(link.visibleHost).toBe(destination.host);
+          expect(link.indicator).toContain('↗');
+          expect(link.description).toContain(destination.host);
+          expect(link.description).toContain('opens in a new tab');
+        } else {
+          expect(link.target).toBeNull();
+          expect(link.rel).not.toContain('external');
+          expect(link.externalClass).toBe(false);
+          expect(link.visibleHost).toBeNull();
+          expect(link.indicator).toBeNull();
+          expect(link.description).toBeNull();
+        }
       }
-    }
+    });
   }
 });
 
@@ -293,7 +302,7 @@ test('common sensitive project paths are not publicly exposed', async ({ request
 });
 
 test('query-string input is not reflected into any production HTML page', async ({ page }) => {
-  const probe = 'IKESAMA_SECURITY_PROBE_7f41c2';
+  const probe = 'BLOG_SECURITY_PROBE_7f41c2';
 
   for (const { artifact, route } of await getPublicHtmlPages()) {
     await test.step(`${artifact} at ${route}`, async () => {

@@ -1,0 +1,257 @@
+name: Site
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: site-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SITE_URL: https://example.test
+  SITE_BASE: /
+
+jobs:
+  changes:
+    name: Change scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      content_only: ${{ steps.scope.outputs.content_only }}
+      head_sha: ${{ steps.scope.outputs.head_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Detect content-only change
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          head_sha="$(git rev-parse HEAD)"
+          base_sha=""
+
+          if [[ "$EVENT_NAME" == "pull_request" && -n "$PR_BASE_SHA" ]]; then
+            base_sha="$PR_BASE_SHA"
+          elif [[ -n "$PUSH_BEFORE_SHA" && ! "$PUSH_BEFORE_SHA" =~ ^0+$ ]]; then
+            base_sha="$PUSH_BEFORE_SHA"
+          fi
+
+          if [[ -n "$base_sha" ]] && git cat-file -e "$base_sha^{commit}" 2>/dev/null; then
+            mapfile -t changed_files < <(git diff --name-only "$base_sha" "$head_sha")
+          else
+            mapfile -t changed_files < <(git ls-files)
+          fi
+
+          content_only=true
+          if [[ "${#changed_files[@]}" -eq 0 ]]; then
+            content_only=false
+          fi
+
+          for file in "${changed_files[@]}"; do
+            if [[ "$file" != src/content/writing/*.md ]]; then
+              content_only=false
+              break
+            fi
+          done
+
+          {
+            echo "### Change scope"
+            printf '%s\n' "${changed_files[@]}" | sed 's/^/- /'
+            echo
+            echo "content_only=$content_only"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "content_only=$content_only" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
+  quality:
+    name: Quality gate
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.changes.outputs.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify content-only change
+        if: needs.changes.outputs.content_only == 'true'
+        run: npm run verify:content
+
+      - name: Verify code change
+        if: needs.changes.outputs.content_only != 'true'
+        run: npm run verify:code
+
+  browser:
+    name: Browser gate
+    needs: [changes, quality]
+    if: needs.changes.outputs.content_only != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.changes.outputs.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: E2E
+        run: npm run test:e2e
+
+      - name: Security browser tests
+        run: npm run test:security
+
+      - name: Accessibility
+        run: npm run test:accessibility
+
+  ci-gate:
+    name: CI gate
+    if: always()
+    needs: [changes, quality, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify required gates
+        env:
+          CONTENT_ONLY: ${{ needs.changes.outputs.content_only }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          set -euo pipefail
+          echo "changes=$CHANGES_RESULT"
+          echo "quality=$QUALITY_RESULT"
+          echo "browser=$BROWSER_RESULT"
+          echo "content_only=$CONTENT_ONLY"
+
+          test "$CHANGES_RESULT" = "success"
+          test "$QUALITY_RESULT" = "success"
+
+          if [[ "$CONTENT_ONLY" == "true" ]]; then
+            test "$BROWSER_RESULT" = "skipped"
+          else
+            test "$BROWSER_RESULT" = "success"
+          fi
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: ci-gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-gate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6.0.0
+
+      - name: Resolve deployment inputs
+        id: deployment-inputs
+        shell: bash
+        env:
+          PAGES_BASE_URL: ${{ steps.pages.outputs.base_url }}
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          set -euo pipefail
+          site_base="$PAGES_BASE_PATH"
+          if [[ -z "$site_base" ]]; then
+            site_base="/"
+          fi
+          echo "site_url=$PAGES_BASE_URL" >> "$GITHUB_OUTPUT"
+          echo "site_base=$site_base" >> "$GITHUB_OUTPUT"
+
+      - name: Build production site
+        env:
+          SITE_URL: ${{ steps.deployment-inputs.outputs.site_url }}
+          SITE_BASE: ${{ steps.deployment-inputs.outputs.site_base }}
+        run: npm run build
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5.0.1
+
+  smoke:
+    name: Production smoke
+    needs: deploy
+    if: github.event_name == 'push' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PRODUCTION_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install smoke-test browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Production smoke
+        run: npm run test:smoke

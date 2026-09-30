@@ -1,10 +1,19 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const routes = ['/', '/archive/', '/about/', '/writing/quality-gates-for-a-small-site/'];
+const staticRoutes = ['/', '/archive/', '/about/'];
+
+async function firstPublishedArticleHref(page: Page): Promise<string> {
+  await page.goto('/archive/');
+  const firstArticle = page.locator('.post-link').first();
+  await expect(firstArticle).toBeVisible();
+  const href = await firstArticle.getAttribute('href');
+  if (!href) throw new Error('Archive does not contain a published article link.');
+  return href;
+}
 
 test.describe('accessibility quality gate', () => {
-  for (const route of routes) {
+  for (const route of staticRoutes) {
     test(`${route} has no critical accessibility violations`, async ({ page }) => {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('button', { name: 'Dark mode' })).toBeEnabled();
@@ -13,6 +22,15 @@ test.describe('accessibility quality gate', () => {
       expect(accessibilityScanResults.violations).toEqual([]);
     });
   }
+
+  test('a published article has no critical accessibility violations', async ({ page }) => {
+    const href = await firstPublishedArticleHref(page);
+    await page.goto(href, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('button', { name: 'Dark mode' })).toBeEnabled();
+
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
 
   test('header actions remain in a single row and theme toggle exposes clear state', async ({
     page,
@@ -43,11 +61,11 @@ test.describe('accessibility quality gate', () => {
     ).toBeLessThan(4);
   });
 
-  test('archive headings expose the category and date hierarchy', async ({ page }) => {
+  test('archive headings expose category and date hierarchy', async ({ page }) => {
     await page.goto('/archive/');
-    await expect(page.getByRole('heading', { name: '技術', level: 2 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '2026', level: 3 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '9月', level: 4 })).toBeVisible();
+    await expect(page.locator('.archive-category h2').first()).toBeVisible();
+    await expect(page.locator('.archive-year h3').first()).toBeVisible();
+    await expect(page.locator('.archive-month h4').first()).toBeVisible();
   });
 
   test('skip link is present and keyboard navigation reaches the main content', async ({

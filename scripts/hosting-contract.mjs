@@ -10,6 +10,8 @@ const dist = resolve(root, 'dist');
 const rootSiteUrl = process.env.SITE_URL;
 const rootBase = process.env.SITE_BASE;
 const npmCli = process.env.npm_execpath;
+const subpathBase = '/project-site';
+const subpathSiteUrl = 'https://example.test/project-site/';
 
 function fail(message) {
   throw new Error(`Hosting contract failed: ${message}`);
@@ -40,7 +42,15 @@ async function walk(directory) {
   return nested.flat();
 }
 
+function routeForArticleArtifact(file) {
+  if (!file.startsWith('writing/') || !file.endsWith('/index.html')) return null;
+  if (file === 'writing/index.html') return null;
+  return `/${file.slice(0, -'index.html'.length)}`;
+}
+
 async function assertArtifact(base, siteUrl) {
+  if (!existsSync(dist)) fail('dist/ is missing; run the production build first.');
+
   const htmlFiles = await walk(dist);
   const htmlPages = new Map(
     await Promise.all(
@@ -58,12 +68,16 @@ async function assertArtifact(base, siteUrl) {
     ['archive/index.html', '/archive/'],
     ['about/index.html', '/about/'],
     ['writing/index.html', '/writing/'],
-    [
-      'writing/quality-gates-for-a-small-site/index.html',
-      '/writing/quality-gates-for-a-small-site/',
-    ],
     ['404.html', '/404/'],
   ]);
+
+  const articleFiles = [...htmlPages.keys()].filter((file) => routeForArticleArtifact(file));
+  if (articleFiles.length === 0) {
+    fail('at least one published article artifact is required.');
+  }
+  for (const file of articleFiles) {
+    routes.set(file, routeForArticleArtifact(file));
+  }
 
   if (htmlPages.has('projects/index.html')) {
     fail('Projects route must not be included in the blog artifact.');
@@ -83,25 +97,29 @@ async function assertArtifact(base, siteUrl) {
   let sawStylesheet = false;
   let sawFavicon = false;
   let sawLotusBrandImage = false;
+
   for (const [file, html] of htmlPages) {
     for (const [, reference] of html.matchAll(/\b(?:href|src)="([^"]+)"/gi)) {
       if (reference.startsWith('/')) {
         if (prefix && !reference.startsWith(`${prefix}/`)) {
           fail(`${file} contains a root-relative URL outside SITE_BASE: ${reference}`);
         }
-        if (!prefix && reference.startsWith('/ikesama.dev/')) {
-          fail(`${file} contains the GitHub Pages base path in a root deployment.`);
+        if (!prefix && reference.startsWith(`${subpathBase}/`)) {
+          fail(`${file} contains the subpath test prefix in a root deployment.`);
         }
       }
     }
+
     if (/src=["'][^"']*theme-init\.js/i.test(html)) sawThemeScript = true;
     if (/rel=["']stylesheet["'][^>]*href=/i.test(html)) sawStylesheet = true;
     if (/rel=["']icon["'][^>]*href=/i.test(html)) sawFavicon = true;
     if (/lotus-512\.png/.test(html)) sawLotusBrandImage = true;
   }
+
   for (const asset of ['lotus-512.png', 'favicon-32x32.png', 'apple-touch-icon.png']) {
     if (!existsSync(join(dist, asset))) fail(`expected branding asset ${asset} is missing.`);
   }
+
   if (!sawThemeScript || !sawStylesheet || !sawFavicon || !sawLotusBrandImage) {
     fail('generated pages must include theme, stylesheet, favicon, and lotus brand resources.');
   }
@@ -121,22 +139,12 @@ async function assertArtifact(base, siteUrl) {
 }
 
 if (!rootSiteUrl || rootBase !== '/' || !npmCli) {
-  fail('the initial build must use an explicit root SITE_URL and SITE_BASE=/.');
+  fail('the existing build must use an explicit root SITE_URL and SITE_BASE=/.');
 }
-
-const rootBuild = spawnSync(process.execPath, [npmCli, 'run', 'build:astro'], {
-  cwd: root,
-  env: process.env,
-  stdio: 'inherit',
-});
-if (rootBuild.error) throw rootBuild.error;
-if (rootBuild.status !== 0) process.exit(rootBuild.status ?? 1);
 
 const normalizedRootSiteUrl = normalizeSiteUrl(rootSiteUrl, rootBase);
 await assertArtifact('/', normalizedRootSiteUrl);
 
-const subpathBase = '/ikesama.dev';
-const subpathSiteUrl = 'https://example.test/ikesama.dev/';
 const build = spawnSync(process.execPath, [npmCli, 'run', 'build:astro'], {
   cwd: root,
   env: {

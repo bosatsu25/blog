@@ -1,10 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { normalizeBase, resolveProductionUrl, withBase } from '../../src/config/site';
 
 const productionURL = resolveProductionUrl(process.env.PRODUCTION_URL);
 const siteBase = normalizeBase(productionURL.pathname);
 const publicPath = (path: string): string => withBase(path, siteBase);
-const htmlPages = ['/', '/archive/', '/about/', '/writing/quality-gates-for-a-small-site/'];
+const htmlPages = ['/', '/archive/', '/about/'];
+
+async function firstPublishedArticleHref(page: Page): Promise<string> {
+  await page.goto(publicPath('/archive/'));
+  const firstArticle = page.locator('.post-link').first();
+  await expect(firstArticle).toBeVisible();
+
+  const href = await firstArticle.getAttribute('href');
+  if (!href) throw new Error('Production archive does not contain a published article link.');
+  return href;
+}
 
 test.describe('production smoke', () => {
   for (const path of htmlPages) {
@@ -38,7 +48,20 @@ test.describe('production smoke', () => {
     });
   }
 
-  test('RSS and sitemap endpoints publish valid route references', async ({ page, request }) => {
+  test('a published article discovered from production Archive is reachable', async ({ page }) => {
+    const href = await firstPublishedArticleHref(page);
+    const response = await page.goto(new URL(href, productionURL.origin).href, {
+      waitUntil: 'networkidle',
+    });
+
+    expect(response).not.toBeNull();
+    expect(response?.status()).toBeLessThan(400);
+    await expect(page.locator('.article-header h1')).toBeVisible();
+    await expect(page.locator('.article-body')).toBeVisible();
+    await expect(page.locator('.article-body')).toHaveCSS('user-select', 'none');
+  });
+
+  test('RSS and sitemap endpoints publish valid article references', async ({ page, request }) => {
     const rss = await request.get(publicPath('/rss.xml'));
     expect(rss.status()).toBe(200);
     expect(rss.headers()['content-type']).toMatch(
@@ -55,11 +78,12 @@ test.describe('production smoke', () => {
       };
     }, xml);
     expect(parsedFeed.hasParseError).toBe(false);
-    expect(
-      parsedFeed.itemLinks.some((link) =>
-        new URL(link ?? '').pathname.endsWith('/writing/quality-gates-for-a-small-site/'),
-      ),
-    ).toBe(true);
+
+    const articleLink = parsedFeed.itemLinks.find((link) => {
+      if (!link) return false;
+      return /\/writing\/.+\/$/.test(new URL(link).pathname);
+    });
+    if (!articleLink) throw new Error('RSS does not contain a published article URL.');
 
     const sitemapIndex = await request.get(publicPath('/sitemap-index.xml'));
     expect(sitemapIndex.status()).toBe(200);
@@ -84,12 +108,9 @@ test.describe('production smoke', () => {
     for (const response of sitemapResponses) {
       expect(response.status()).toBe(200);
     }
+
     const sitemapDocuments = await Promise.all(sitemapResponses.map((response) => response.text()));
-    expect(
-      sitemapDocuments.some((sitemapXml) =>
-        sitemapXml.includes('/writing/quality-gates-for-a-small-site/'),
-      ),
-    ).toBe(true);
+    expect(sitemapDocuments.some((sitemapXml) => sitemapXml.includes(articleLink))).toBe(true);
   });
 
   test('brand image, favicon, and Apple touch icon are served', async ({ request }) => {
@@ -153,26 +174,5 @@ test.describe('production smoke', () => {
       'content',
       new URL(publicPath('/lotus-512.png'), productionURL.origin).href,
     );
-  });
-
-  test('article links expose secure external destinations without leaving production', async ({
-    page,
-  }) => {
-    await page.goto(publicPath('/writing/quality-gates-for-a-small-site/'), {
-      waitUntil: 'networkidle',
-    });
-
-    const articleBody = page.locator('.article-body');
-    await expect(articleBody).toHaveCSS('user-select', 'none');
-    const externalLink = articleBody.locator('a.external-link');
-    await expect(externalLink).toHaveAttribute('href', 'https://playwright.dev/');
-    await expect(externalLink).toHaveAttribute('target', '_blank');
-    await expect(externalLink).toHaveAttribute('rel', 'noopener noreferrer external');
-    await expect(externalLink).toHaveAttribute('referrerpolicy', 'no-referrer');
-    await expect(externalLink.locator('.external-link__hostname')).toHaveText('playwright.dev');
-
-    const internalLink = articleBody.getByRole('link', { name: 'static-firstの記事' });
-    await expect(internalLink).not.toHaveAttribute('target', '_blank');
-    await expect(internalLink.locator('.external-link__hostname')).toHaveCount(0);
   });
 });
