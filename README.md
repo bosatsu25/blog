@@ -103,30 +103,30 @@ Windowsで`npm ci`が`EPERM`になる場合は、開発サーバーやNodeプロ
 
 ## Commands
 
-| Command                      | Purpose                                         |
-| ---------------------------- | ----------------------------------------------- |
-| `npm run dev`                | Start local development server                  |
-| `npm run build`              | Astro Check + production build                  |
-| `npm run preview`            | Preview production build                        |
-| `npm run format`             | Apply Prettier formatting                       |
-| `npm run format:check`       | Verify repository formatting                    |
-| `npm run format:content`     | Verify article Markdown formatting              |
-| `npm run lint`               | Run ESLint                                      |
-| `npm run check`              | Run Astro diagnostics                           |
-| `npm run test`               | Run Vitest unit tests                           |
-| `npm run test:e2e`           | Run Playwright E2E tests                        |
-| `npm run test:security`      | Test browser-level security contracts           |
-| `npm run test:accessibility` | Run axe and keyboard accessibility checks       |
-| `npm run test:smoke`         | Smoke-test the configured production URL        |
-| `npm run test:hosting`       | Verify root and generic subpath artifacts        |
-| `npm run security:audit`     | Audit generated/source security invariants      |
-| `npm run performance:budget` | Check generated asset-size budgets              |
-| `npm run verify:content`     | Fast gate for article-only changes              |
-| `npm run verify:code`        | Non-browser full code quality gate              |
-| `npm run verify`             | Full local code + browser verification           |
-| `npm run audit`              | Run dependency vulnerability audit              |
-| `npm run post:new`           | Create a timestamped draft article              |
-| `npm run post:publish`       | Validate, publish, commit, and push one draft    |
+| Command                      | Purpose                                       |
+| ---------------------------- | --------------------------------------------- |
+| `npm run dev`                | Start local development server                |
+| `npm run build`              | Astro Check + production build                |
+| `npm run preview`            | Preview production build                      |
+| `npm run format`             | Apply Prettier formatting                     |
+| `npm run format:check`       | Verify repository formatting                  |
+| `npm run format:content`     | Verify article Markdown formatting            |
+| `npm run lint`               | Run ESLint                                    |
+| `npm run check`              | Run Astro diagnostics                         |
+| `npm run test`               | Run Vitest unit tests                         |
+| `npm run test:e2e`           | Run Playwright E2E tests                      |
+| `npm run test:security`      | Test browser-level security contracts         |
+| `npm run test:accessibility` | Run axe and keyboard accessibility checks     |
+| `npm run test:smoke`         | Smoke-test the configured production URL      |
+| `npm run test:hosting`       | Verify root and generic subpath artifacts     |
+| `npm run security:audit`     | Audit generated/source security invariants    |
+| `npm run performance:budget` | Check generated asset-size budgets            |
+| `npm run verify:content`     | Fast gate for article-only changes            |
+| `npm run verify:code`        | Non-browser full code quality gate            |
+| `npm run verify`             | Full local code + browser verification        |
+| `npm run audit`              | Run dependency vulnerability audit            |
+| `npm run post:new`           | Create a timestamped draft article            |
+| `npm run post:publish`       | Validate, publish, commit, and push one draft |
 
 Production-shaped local verification requires explicit `SITE_URL` and `SITE_BASE` values. See [docs/deployment.md](./docs/deployment.md).
 
