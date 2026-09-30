@@ -21,20 +21,20 @@ function partsFor(date) {
 
 export function formatArticleId(date = new Date()) {
   const { year, month, day, hour, minute } = partsFor(date);
-  return \`${year.slice(-2)}${month}${day}-${hour}${minute}\`;
+  return `${year.slice(-2)}${month}${day}-${hour}${minute}`;
 }
 
 export function formatPublishedDate(date = new Date()) {
   const { year, month, day } = partsFor(date);
-  return \`${year}-${month}-${day}\`;
+  return `${year}-${month}-${day}`;
 }
 
 export function yamlSingleQuoted(value) {
-  return \`'${String(value).replace(/\r?\n/g, ' ').trim().replaceAll("'", "''")}'\`;
+  return `'${String(value).replace(/\r?\n/g, ' ').trim().replaceAll("'", "''")}'`;
 }
 
 export function setDraftState(markdown, draft) {
-  const replacement = \`draft: ${draft ? 'true' : 'false'}\`;
+  const replacement = `draft: ${draft ? 'true' : 'false'}`;
   if (!/^draft:\s*(?:true|false)\s*$/m.test(markdown)) {
     throw new Error('Article frontmatter must contain an explicit draft field.');
   }
@@ -47,10 +47,10 @@ export function readFrontmatterString(markdown, field) {
     throw new Error('Article must begin with YAML frontmatter.');
   }
 
-  const escapedField = field.replace(/[.*+?^$${}()|[\]\\]/g, '\\$&');
-  const match = frontmatter.match(new RegExp(\`^${escapedField}:\\s*(['"])(.*?)\\1\\s*$\`, 'm'));
+  const escapedField = field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = frontmatter.match(new RegExp(`^${escapedField}:\\s*(['"])(.*?)\\1\\s*$`, 'm'));
   if (!match) {
-    throw new Error(\`Article frontmatter field "${field}" must be a quoted string.\`);
+    throw new Error(`Article frontmatter field "${field}" must be a quoted string.`);
   }
 
   return match[2].replaceAll("''", "'");
