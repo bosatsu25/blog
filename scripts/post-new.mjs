@@ -9,7 +9,7 @@ const categories = ['仏教', '日々', '技術'];
 
 async function askRequired(rl, label) {
   while (true) {
-    const value = (await rl.question(\`${label}: \`)).trim();
+    const value = (await rl.question(`${label}: `)).trim();
     if (value) return value;
     output.write('空欄にはできません。\n');
   }
@@ -17,7 +17,7 @@ async function askRequired(rl, label) {
 
 async function chooseCategory(rl) {
   output.write('カテゴリ:\n');
-  categories.forEach((category, index) => output.write(\`  ${index + 1}. ${category}\n\`));
+  categories.forEach((category, index) => output.write(`  ${index + 1}. ${category}\n`));
 
   while (true) {
     const answer = (await rl.question('番号を選択: ')).trim();
@@ -29,8 +29,8 @@ async function chooseCategory(rl) {
 
 async function nextAvailablePath(baseId) {
   for (let attempt = 1; attempt <= 99; attempt += 1) {
-    const suffix = attempt === 1 ? '' : \`-${String(attempt).padStart(2, '0')}\`;
-    const filePath = resolve(articleDirectory, \`${baseId}${suffix}.md\`);
+    const suffix = attempt === 1 ? '' : `-${String(attempt).padStart(2, '0')}`;
+    const filePath = resolve(articleDirectory, `${baseId}${suffix}.md`);
     try {
       await access(filePath);
     } catch {
@@ -50,7 +50,7 @@ try {
   const now = new Date();
   const filePath = await nextAvailablePath(formatArticleId(now));
 
-  const markdown = \`---
+  const markdown = `---
 title: ${yamlSingleQuoted(title)}
 description: ${yamlSingleQuoted(description)}
 publishedAt: ${formatPublishedDate(now)}
@@ -58,12 +58,12 @@ category: ${category}
 draft: true
 ---
 
-\`;
+`;
 
   await mkdir(articleDirectory, { recursive: true });
   await writeFile(filePath, markdown, { encoding: 'utf8', flag: 'wx' });
 
-  output.write(\`\n下書きを作成しました: ${filePath}\n\`);
+  output.write(`\n下書きを作成しました: ${filePath}\n`);
   output.write('本文を書いたら npm run post:publish を実行してください。\n');
 } finally {
   rl.close();
