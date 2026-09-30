@@ -88,9 +88,7 @@ async function assertArtifact(base, siteUrl) {
     if (!html) fail(`expected route artifact ${file} is missing.`);
     const canonical = html.match(/<link\b[^>]*\brel="canonical"[^>]*\bhref="([^"]+)"/i)?.[1];
     if (canonical !== `${siteUrl}${route.slice(1)}`) {
-      fail(
-        `${file} canonical should be ${siteUrl}${route.slice(1)}, got ${canonical ?? 'none'}.`,
-      );
+      fail(`${file} canonical should be ${siteUrl}${route.slice(1)}, got ${canonical ?? 'none'}.`);
     }
   }
 
