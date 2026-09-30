@@ -48,10 +48,11 @@ sitemap entries, and root-relative assets resolve from `/`.
 ## GitHub Pages
 
 GitHub Pages remains the current production deployment. Its workflow supplies
-`SITE_URL=https://bosatsuking.github.io/ikesama.dev` and `SITE_BASE=/ikesama.dev`. These
-provider-specific values are kept in `.github/workflows/deploy.yml`; the workflow builds and
-deploys the exact SHA whose main-branch CI succeeded, then passes the deployed URL to
-`PRODUCTION_URL` for read-only smoke tests.
+`SITE_URL` and `PRODUCTION_URL` from the repository owner and name, and sets `SITE_BASE` to
+the repository-name path (for example, `/blog`). These provider-specific values are kept in
+`.github/workflows/deploy.yml`; deriving them from the current repository prevents the
+project-page URL from going stale after a repository rename. The workflow builds and deploys
+the exact SHA whose main-branch CI succeeded, then uses the same URL for read-only smoke tests.
 
 ## Future Hosting Provider
 
