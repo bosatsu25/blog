@@ -2,26 +2,30 @@
 
 ## Goals
 
-Build the same static application for a domain root or a path prefix by changing only build
-inputs. Application code does not branch on GitHub Pages, Cloudflare Pages, repository names,
-or provider hostnames. GitHub Pages remains the current production host.
+Publish one static Astro artifact to GitHub Pages with no paid runtime service and no repository-name-specific application code.
 
-## Build Inputs
+GitHub Pages is the production host. There is no Cloudflare Pages, external CMS, database, worker, API server, or provider abstraction to operate.
 
-- `SITE_URL` is an absolute HTTP(S) public site URL: the origin plus the optional deployment
-  path, with no credentials, query, or fragment. A trailing slash is normalized.
-- `SITE_BASE` is `/` for a root deployment or an absolute path prefix such as `/ikesama.dev`.
-  It may have one trailing slash; generated configuration normalizes it to exactly one.
-- `SITE_URL`'s path and `SITE_BASE` must describe the same deployment path. Values such as
-  `ikesama.dev`, `//ikesama.dev`, duplicate slashes, dot segments, and mismatched paths fail
-  validation.
-- `PRODUCTION_URL` is required by the production smoke suite. It is an absolute public URL
-  including the deployed base path, if any.
+## Repository setting
 
-Production builds require both `SITE_URL` and `SITE_BASE`. Astro development defaults to
-`http://localhost:4321/` and `/` when no values are provided.
+Repository Settings → Pages → Build and deployment must use:
 
-## Local Development
+```text
+Source: GitHub Actions
+```
+
+This is a one-time repository setting. Branch/Jekyll publishing must not be enabled for this Astro repository, because it would create a second Pages build path and attempt to process Astro source as Jekyll content.
+
+## Build inputs
+
+- `SITE_URL` is an absolute HTTP(S) public site URL: origin plus optional deployment path.
+- `SITE_BASE` is `/` for a root deployment or an absolute path prefix such as `/project-site`.
+- `SITE_URL`'s path and `SITE_BASE` must describe the same deployment path.
+- `PRODUCTION_URL` is required by the read-only production smoke suite.
+
+Production builds require both `SITE_URL` and `SITE_BASE`. Astro development defaults to `http://localhost:4321/` and `/` when no values are provided.
+
+## Local development
 
 ```powershell
 $env:SITE_URL = 'http://localhost:4321'
@@ -38,63 +42,56 @@ npm run build
 npm run test:hosting
 ```
 
-`test:hosting` checks the existing root build, then builds and checks the subpath configuration.
+`test:hosting` validates the existing root artifact, then rebuilds once with the generic `/project-site` prefix and validates the subpath artifact. The test value is deliberately unrelated to the repository name.
 
-## Root Hosting
+## GitHub Pages workflow
 
-Use `SITE_URL=https://example.test` and `SITE_BASE=/`. Generated routes, canonicals, RSS,
-sitemap entries, and root-relative assets resolve from `/`.
+`.github/workflows/site.yml` owns CI and deployment.
 
-## GitHub Pages
+On a successful `main` CI gate:
 
-GitHub Pages remains the current production deployment. Its workflow supplies
-`SITE_URL` and `PRODUCTION_URL` from the repository owner and name, and sets `SITE_BASE` to
-the repository-name path (for example, `/blog`). These provider-specific values are kept in
-`.github/workflows/deploy.yml`; deriving them from the current repository prevents the
-project-page URL from going stale after a repository rename. The workflow builds and deploys
-the exact SHA whose main-branch CI succeeded, then uses the same URL for read-only smoke tests.
+1. `actions/configure-pages` reads the effective Pages configuration.
+2. Its `base_url` becomes `SITE_URL`.
+3. Its `base_path` becomes `SITE_BASE`; an empty base path is normalized to `/`.
+4. Astro builds the production artifact.
+5. `actions/upload-pages-artifact` uploads `dist/`.
+6. `actions/deploy-pages` publishes that artifact.
+7. The returned production URL is passed to the read-only smoke suite.
 
-## Future Hosting Provider
+The workflow therefore does not calculate `https://OWNER.github.io/REPOSITORY` itself. Repository renames and a future custom domain do not require URL constants in application code.
 
-Cloudflare Pages is only a future migration candidate and is not configured or deployed in
-this phase. A root deployment there would supply its own public `SITE_URL` and `SITE_BASE=/`
-to the same Astro build. No provider discriminator, provider-specific application branch,
-workflow, credential, or account setup is part of this design.
+## Production smoke
 
-## Production Smoke
+Set `PRODUCTION_URL` to the deployed site root, including the path prefix where applicable, then run:
 
-Set `PRODUCTION_URL` to the deployed site root, including the path prefix where applicable,
-then run `npm run test:smoke`. The test suite derives its base path from this URL and checks
-routes, assets, canonical URLs, RSS, sitemap, CSP, navigation, theme interaction, and article
-link contracts without leaving the deployed site. CI uses the same commit SHA for deployment
-and smoke-test source.
+```bash
+npm run test:smoke
+```
 
-## URL / Base Path Contract
+The suite verifies core routes, a dynamically discovered published article, assets, canonical URLs, RSS, sitemap, CSP, navigation, theme interaction, and the custom 404 response.
 
-`SITE_URL` identifies the public deployment prefix, and `SITE_BASE` is that prefix in path
-form. The root pair is `https://example.test` and `/`; the subpath pair is
-`https://example.test/ikesama.dev` and `/ikesama.dev`. The Astro `site` and `base` settings
-are both derived from these inputs. Canonical URLs, sitemap and RSS links use the public URL;
-navigation, assets, favicon, theme initialization, and internal links use the base path.
+The suite does not depend on a specific article filename or title.
 
-The artifact contract verifies expected static routes, canonical URLs, assets, sitemap, and
-RSS for both root and subpath builds. Secure External Links classifies current-site absolute
-URLs by the configured site's origin and does not hard-code any production hostname.
+## URL / base-path contract
 
-## Migration Strategy
+The root pair is:
 
-1. Keep GitHub Pages as production while a candidate provider is configured separately.
-2. Build and smoke-test the candidate using its own `SITE_URL`, `SITE_BASE`, and
-   `PRODUCTION_URL`.
-3. Compare the deployed routes, assets, canonical URLs, sitemap, RSS, security policy, and
-   browser behavior before considering a production cutover.
-4. Make any repository rename or custom-domain change as a separate, reviewed operation after
-   updating the deployment inputs and confirming external links and redirects.
+```text
+SITE_URL=https://example.test
+SITE_BASE=/
+```
 
-## Known Constraints
+The generic subpath pair used by the hosting contract is:
 
-- Cloudflare Pages has not been introduced; GitHub Pages is current production.
-- No custom domain has been selected.
-- The GitHub Pages repository subpath remains a deployment input, not an application identity.
-- A hosting provider still needs to serve the generated static files and support the site's
-  expected clean-route behavior and `404.html` fallback.
+```text
+SITE_URL=https://example.test/project-site
+SITE_BASE=/project-site
+```
+
+Canonical URLs, sitemap and RSS links use the public URL. Navigation, assets, favicon, theme initialization, and internal links use the normalized base path.
+
+## Cost boundary
+
+The deployment architecture intentionally requires no application runtime after build. The public repository, GitHub Actions workflow, and GitHub Pages static hosting are the only hosting-side components.
+
+A separately purchased custom domain, if added later, is outside this zero-runtime-cost architecture.
