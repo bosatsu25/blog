@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: site-${${ github.event.pull_request.number || github.ref }}
+  group: site-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -25,22 +25,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      content_only: ${${ steps.scope.outputs.content_only }}
-      head_sha: ${${ steps.scope.outputs.head_sha }}
+      content_only: ${{ steps.scope.outputs.content_only }}
+      head_sha: ${{ steps.scope.outputs.head_sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${${ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Detect content-only change
         id: scope
         shell: bash
         env:
-          EVENT_NAME: ${${ github.event_name }}
-          PR_BASE_SHA: ${${ github.event.pull_request.base.sha }}
-          PUSH_BEFORE_SHA: ${${ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
 
@@ -90,7 +90,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${${ needs.changes.outputs.head_sha }}
+          ref: ${{ needs.changes.outputs.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -119,7 +119,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${${ needs.changes.outputs.head_sha }}
+          ref: ${{ needs.changes.outputs.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -151,10 +151,10 @@ jobs:
     steps:
       - name: Verify required gates
         env:
-          CONTENT_ONLY: ${${ needs.changes.outputs.content_only }}
-          CHANGES_RESULT: ${${ needs.changes.result }}
-          QUALITY_RESULT: ${${ needs.quality.result }}
-          BROWSER_RESULT: ${${ needs.browser.result }}
+          CONTENT_ONLY: ${{ needs.changes.outputs.content_only }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           set -euo pipefail
           echo "changes=$CHANGES_RESULT"
@@ -179,9 +179,9 @@ jobs:
     timeout-minutes: 15
     environment:
       name: github-pages
-      url: ${${ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     outputs:
-      page_url: ${${ steps.deployment.outputs.page_url }}
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -203,8 +203,8 @@ jobs:
         id: deployment-inputs
         shell: bash
         env:
-          PAGES_BASE_URL: ${${ steps.pages.outputs.base_url }}
-          PAGES_BASE_PATH: ${${ steps.pages.outputs.base_path }}
+          PAGES_BASE_URL: ${{ steps.pages.outputs.base_url }}
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: |
           set -euo pipefail
           site_base="$PAGES_BASE_PATH"
@@ -216,8 +216,8 @@ jobs:
 
       - name: Build production site
         env:
-          SITE_URL: ${${ steps.deployment-inputs.outputs.site_url }}
-          SITE_BASE: ${${ steps.deployment-inputs.outputs.site_base }}
+          SITE_URL: ${{ steps.deployment-inputs.outputs.site_url }}
+          SITE_BASE: ${{ steps.deployment-inputs.outputs.site_base }}
         run: npm run build
 
       - name: Upload GitHub Pages artifact
@@ -236,7 +236,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PRODUCTION_URL: ${${ needs.deploy.outputs.page_url }}
+      PRODUCTION_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
