@@ -12,7 +12,7 @@ const writing = defineCollection({
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date().optional(),
     category: z.enum(writingCategories),
-    draft: z.boolean().default(false),
+    draft: z.boolean().default(true),
   }),
 });
 
