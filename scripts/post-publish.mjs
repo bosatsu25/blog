@@ -52,7 +52,7 @@ function run(command, args, options = {}) {
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(
-      \`${command} ${args.join(' ')} failed with exit code ${result.status ?? 'unknown'}.\`,
+      `${command} ${args.join(' ')} failed with exit code ${result.status ?? 'unknown'}.`,
     );
   }
 }
@@ -64,7 +64,7 @@ async function chooseDraft(drafts) {
     const relativePath = assertInsideArticleDirectory(candidate);
     const draft = drafts.find(({ file }) => resolve(file) === candidate);
     if (!draft) {
-      throw new Error(\`${relativePath} は draft: true の記事ではありません。\`);
+      throw new Error(`${relativePath} は draft: true の記事ではありません。`);
     }
     return draft;
   }
@@ -79,14 +79,14 @@ async function chooseDraft(drafts) {
     output.write('公開する記事を選択してください:\n');
     drafts.forEach((draft, index) => {
       output.write(
-        \`  ${index + 1}. ${draft.title} (${assertInsideArticleDirectory(draft.file)})\n\`,
+        `  ${index + 1}. ${draft.title} (${assertInsideArticleDirectory(draft.file)})\n`,
       );
     });
 
     while (true) {
       const answer = Number((await rl.question('番号を選択: ')).trim()) - 1;
       if (Number.isInteger(answer) && drafts[answer]) return drafts[answer];
-      output.write(\`1〜${drafts.length}の番号で選択してください。\n\`);
+      output.write(`1〜${drafts.length}の番号で選択してください。\n`);
     }
   } finally {
     rl.close();
@@ -115,7 +115,7 @@ try {
 }
 
 run('git', ['add', '--', relativePath]);
-run('git', ['commit', '-m', \`publish: ${draft.title}\`, '--', relativePath]);
+run('git', ['commit', '-m', `publish: ${draft.title}`, '--', relativePath]);
 run('git', ['push', 'origin', 'HEAD']);
 
-output.write(\`公開コミットをpushしました: ${relativePath}\n\`);
+output.write(`公開コミットをpushしました: ${relativePath}\n`);
