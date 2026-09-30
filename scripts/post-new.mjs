@@ -1,7 +1,7 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
+import process, { stdin as input, stdout as output } from 'node:process';
 import { formatArticleId, formatPublishedDate, yamlSingleQuoted } from './post-utils.mjs';
 
 const articleDirectory = resolve(process.cwd(), 'src/content/writing');
